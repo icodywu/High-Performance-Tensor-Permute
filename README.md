@@ -4,21 +4,21 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
 
 It contains 4 optimization steps.
 Step 1. Squeeze the trivial dimensions of size = 1. It takes O(n) time and space complexity.
-EX.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [1, 2, 3, 0, 5, 4]
-      src_nums[8, 9, 1, 6, 4, 6, 1, 10]  ==>  [8, 9, 6, 4, 6, 10]
+EX.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [1, 2, 3, 0, 5, 4] \\
+      src_nums[8, 9, 1, 6, 4, 6, 1, 10]  ==>  [8, 9, 6, 4, 6, 10] \\
 
-EX.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [1, 2, 3, 0, 5, 4]
-      src_nums[8, 9, 1, 6, 4, 6, 1, 10]  ==>  [8, 9, 6, 4, 6, 10]      
+EX.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [1, 2, 3, 0, 5, 4]   \\
+      src_nums[8, 9, 1, 6, 4, 6, 1, 10]  ==>  [8, 9, 6, 4, 6, 10]  \\    
       
  
 Step 2. Compress the consecutive permuted dimensions. It takes O(n) time and space complexity.
-EX.   perm_idx[2, 3,  4,  5,    0, 1,   6, 7 ]  ==>  [1,           0,    2 ]
-      src_nums[8, 9,  12, 6,    4, 6,   9, 10]  ==>  [8x9,  12x6x4x6,  9x10]
-EX.   perm_idx[2, 3,  4,  5,  6, 7,     0,  1]  ==>  [1,              0  ]
-      src_nums[8, 9,  12, 6,  4, 6,     9, 10]  ==>  [8x9,  12x6x4x6x9x10] 
+EX.   perm_idx[2, 3,  4,  5,    0, 1,   6, 7 ]  ==>  [1,           0,    2 ]  \\
+      src_nums[8, 9,  12, 6,    4, 6,   9, 10]  ==>  [8x9,  12x6x4x6,  9x10]  \\
+EX.   perm_idx[2, 3,  4,  5,  6, 7,     0,  1]  ==>  [1,              0  ]    \\
+      src_nums[8, 9,  12, 6,  4, 6,     9, 10]  ==>  [8x9,  12x6x4x6x9x10]    \\
      
-EX.   perm_idx[2, 3,   5,  4,   6, 7,   0,  1]  ==>  [1,     3,    2,   4,    0  ]
-      src_nums[8, 9,   12, 6,   4, 6,   9, 10]  ==>  [8x9,  12x6,  4,   6,   9x10]        
+EX.   perm_idx[2, 3,   5,  4,   6, 7,   0,  1]  ==>  [1,     3,    2,   4,    0  ]   \\
+      src_nums[8, 9,   12, 6,   4, 6,   9, 10]  ==>  [8x9,  12x6,  4,   6,   9x10]   \\     
   
 Step 3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=8, as a single data type 
          and then remove the last dim.

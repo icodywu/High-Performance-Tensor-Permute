@@ -1,5 +1,3 @@
-
-
 #include "permute.h"
 #define MAX_DIM 32
 #define DEBUG 0
@@ -28,7 +26,7 @@ typedef struct {
 template <typename T, int BATCH> void G_Transpose(T* src, T* dst, G_Trans_Param gtrans)
 {
     int64_t i, n, s_i;
-    T* dstPtr, * srcPtr[32];
+    T* dstPtr, * srcPtr[BATCH];
     for (i = s_i = 0; i < gtrans.rows - BATCH + 1; i += BATCH, s_i += BATCH * gtrans.srcWt) {
         dstPtr = dst + i;               // beginning of column no. i
         srcPtr[0] = src + s_i;          // beginning of row no. i 
@@ -63,7 +61,7 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
     const int  remBatch = gtrans.rows % BATCH;
     const uint64_t dtypeSize = gtrans.dtypeSize;
     int64_t i, j, n, s_i;
-    uint8_t* dstPtr, * srcPtr[12];
+    uint8_t* dstPtr, * srcPtr[BATCH];
 
     if (remBatch == 0) {
         for (i = s_i = 0; i < gtrans.rows - BATCH + 1; i += BATCH, s_i += BATCH * gtrans.srcWt) {

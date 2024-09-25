@@ -1,3 +1,5 @@
+
+
 #include "permute.h"
 #define MAX_DIM 32
 #define DEBUG 0
@@ -15,9 +17,9 @@
 
 
 typedef struct {
-    int dtypeSize;     // bytes of data type
-    int rows, cols;    // numbers of rows and columns
-    int srcWt, dstWt;  // weights of source and destination indexes.    
+    int64_t dtypeSize;     // bytes of data type
+    int64_t rows, cols;    // numbers of rows and columns
+    int64_t srcWt, dstWt;  // weights of source and destination indexes.    
 } G_Trans_Param;
 
 /* Batch Generalized Transpose, wherein 2D transpose is a special case with srcWt=cols, dstWt=rows
@@ -25,7 +27,7 @@ typedef struct {
 */
 template <typename T, int BATCH> void G_Transpose(T* src, T* dst, G_Trans_Param gtrans)
 {
-    int i, n, s_i;
+    int64_t i, n, s_i;
     T* dstPtr, * srcPtr[32];
     for (i = s_i = 0; i < gtrans.rows - BATCH + 1; i += BATCH, s_i += BATCH * gtrans.srcWt) {
         dstPtr = dst + i;               // beginning of column no. i
@@ -33,45 +35,8 @@ template <typename T, int BATCH> void G_Transpose(T* src, T* dst, G_Trans_Param 
         for (n = 1; n < BATCH; n++)         // beginning of rows no. i+1, i+2, i+3, ..., i+31 
             srcPtr[n] = srcPtr[0] + n * gtrans.srcWt;
         for (n = gtrans.cols; n > 0; n--) {  //Transpose the batch of rows in parallel
-            switch (BATCH) {        //Note that branching is removed at the compiling time
-            case 4:
-                *dstPtr++ = *srcPtr[0]++;   *dstPtr++ = *srcPtr[1]++;
-                *dstPtr++ = *srcPtr[2]++;   *dstPtr++ = *srcPtr[3]++;
-                break;
-            case 8:
-                *dstPtr++ = *srcPtr[0]++;   *dstPtr++ = *srcPtr[1]++;
-                *dstPtr++ = *srcPtr[2]++;   *dstPtr++ = *srcPtr[3]++;
-                *dstPtr++ = *srcPtr[4]++;   *dstPtr++ = *srcPtr[5]++;
-                *dstPtr++ = *srcPtr[6]++;   *dstPtr++ = *srcPtr[7]++;
-                break;
-            case 16 :
-                *dstPtr++ = *srcPtr[0]++;   *dstPtr++ = *srcPtr[1]++;
-                *dstPtr++ = *srcPtr[2]++;   *dstPtr++ = *srcPtr[3]++;
-                *dstPtr++ = *srcPtr[4]++;   *dstPtr++ = *srcPtr[5]++;
-                *dstPtr++ = *srcPtr[6]++;   *dstPtr++ = *srcPtr[7]++;
-                *dstPtr++ = *srcPtr[8]++;   *dstPtr++ = *srcPtr[9]++;
-                *dstPtr++ = *srcPtr[10]++;   *dstPtr++ = *srcPtr[11]++;
-                *dstPtr++ = *srcPtr[12]++;   *dstPtr++ = *srcPtr[13]++;
-                *dstPtr++ = *srcPtr[14]++;   *dstPtr++ = *srcPtr[15]++;
-                break;
-            default:
-                *dstPtr++ = *srcPtr[0]++;   *dstPtr++ = *srcPtr[1]++;
-                *dstPtr++ = *srcPtr[2]++;   *dstPtr++ = *srcPtr[3]++;
-                *dstPtr++ = *srcPtr[4]++;   *dstPtr++ = *srcPtr[5]++;
-                *dstPtr++ = *srcPtr[6]++;   *dstPtr++ = *srcPtr[7]++;
-                *dstPtr++ = *srcPtr[8]++;   *dstPtr++ = *srcPtr[9]++;
-                *dstPtr++ = *srcPtr[10]++;   *dstPtr++ = *srcPtr[11]++;
-                *dstPtr++ = *srcPtr[12]++;   *dstPtr++ = *srcPtr[13]++;
-                *dstPtr++ = *srcPtr[14]++;   *dstPtr++ = *srcPtr[15]++;
-                *dstPtr++ = *srcPtr[16]++;   *dstPtr++ = *srcPtr[17]++;
-                *dstPtr++ = *srcPtr[18]++;   *dstPtr++ = *srcPtr[19]++;
-                *dstPtr++ = *srcPtr[20]++;   *dstPtr++ = *srcPtr[21]++;
-                *dstPtr++ = *srcPtr[22]++;   *dstPtr++ = *srcPtr[23]++;
-                *dstPtr++ = *srcPtr[24]++;   *dstPtr++ = *srcPtr[25]++;
-                *dstPtr++ = *srcPtr[26]++;   *dstPtr++ = *srcPtr[27]++;
-                *dstPtr++ = *srcPtr[28]++;   *dstPtr++ = *srcPtr[29]++;
-                *dstPtr++ = *srcPtr[30]++;   *dstPtr++ = *srcPtr[31]++;
-            }
+            for(int j=0; j<BATCH; j++) 
+                *dstPtr++ = *srcPtr[j]++; 
             dstPtr += gtrans.dstWt - BATCH;         // jumping to next column index
         }
     }
@@ -97,8 +62,8 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
 {
     const int  remBatch = gtrans.rows % BATCH;
     const uint64_t dtypeSize = gtrans.dtypeSize;
-    int i, j, n, s_i;
-    uint8_t* dstPtr, * srcPtr[8];
+    int64_t i, j, n, s_i;
+    uint8_t* dstPtr, * srcPtr[12];
 
     if (remBatch == 0) {
         for (i = s_i = 0; i < gtrans.rows - BATCH + 1; i += BATCH, s_i += BATCH * gtrans.srcWt) {
@@ -107,23 +72,13 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
             for (n = 1; n < BATCH; n++)         // beginning of rows no. i+1, i+2, ..., i+7 
                 srcPtr[n] = srcPtr[0] + n * gtrans.srcWt * dtypeSize;
             for (n = gtrans.cols; n > 0; n--) {  //Transpose the batch of rows in parallel
-                switch (BATCH) {        //Note that branching is removed at the compiling time
-                case 4:
-                    *((T*)dstPtr) = *((T*)srcPtr[0]);     dstPtr += dtypeSize; srcPtr[0] += dtypeSize;   // overlapped data movement
-                    *((T*)dstPtr) = *((T*)srcPtr[1]);     dstPtr += dtypeSize; srcPtr[1] += dtypeSize;   // overlapped data movement   
-                    *((T*)dstPtr) = *((T*)srcPtr[2]);     dstPtr += dtypeSize; srcPtr[2] += dtypeSize;   // overlapped data movement   
-                    memcpy(dstPtr, srcPtr[3], dtypeSize);               srcPtr[3] += dtypeSize;          // avoid over-write on the last data 
-                    break;
-                default:
-                    *(T*)dstPtr = *((T*)srcPtr[0]);     dstPtr += dtypeSize; srcPtr[0] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[1]);     dstPtr += dtypeSize; srcPtr[1] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[2]);     dstPtr += dtypeSize; srcPtr[2] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[3]);     dstPtr += dtypeSize; srcPtr[3] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[4]);     dstPtr += dtypeSize; srcPtr[4] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[5]);     dstPtr += dtypeSize; srcPtr[5] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[6]);     dstPtr += dtypeSize; srcPtr[6] += dtypeSize;
-                    memcpy(dstPtr, srcPtr[7], dtypeSize);                    srcPtr[7] += dtypeSize;
-                }
+                for (j = 0; j < BATCH - 1; j++) { // overlapped data movement
+                    *(T*)dstPtr = *((T*)srcPtr[j]);     
+                    dstPtr += dtypeSize; 
+                    srcPtr[j] += dtypeSize;   
+                }               
+                memcpy(dstPtr, srcPtr[BATCH-1], dtypeSize);                   
+                srcPtr[BATCH-1] += dtypeSize;                
                 dstPtr += (gtrans.dstWt - BATCH + 1) * dtypeSize;         // jumping to next column index
             }
         }
@@ -135,24 +90,12 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
             for (n = 1; n < BATCH; n++)         // beginning of rows no. i+1, i+2, ..., i+7 
                 srcPtr[n] = srcPtr[0] + n * gtrans.srcWt * dtypeSize;
             for (n = gtrans.cols; n > 0; n--) {  //Transpose the batch of rows in parallel
-                switch (BATCH) {    
-                case 4:
-                    *(T*)dstPtr = *((T*)srcPtr[0]);     dstPtr += dtypeSize; srcPtr[0] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[1]);     dstPtr += dtypeSize; srcPtr[1] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[2]);     dstPtr += dtypeSize; srcPtr[2] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[3]);                          srcPtr[3] += dtypeSize;
-                    break;
-                default:
-                    *(T*)dstPtr = *((T*)srcPtr[0]);     dstPtr += dtypeSize; srcPtr[0] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[1]);     dstPtr += dtypeSize; srcPtr[1] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[2]);     dstPtr += dtypeSize; srcPtr[2] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[3]);     dstPtr += dtypeSize; srcPtr[3] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[4]);     dstPtr += dtypeSize; srcPtr[4] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[5]);     dstPtr += dtypeSize; srcPtr[5] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[6]);     dstPtr += dtypeSize; srcPtr[6] += dtypeSize;
-                    *(T*)dstPtr = *((T*)srcPtr[7]);                          srcPtr[7] += dtypeSize;
+                for (j = 0; j < BATCH; j++) { // overlapped data movement
+                    *(T*)dstPtr = *((T*)srcPtr[j]);
+                    dstPtr += dtypeSize;
+                    srcPtr[j] += dtypeSize;
                 }
-                dstPtr += (gtrans.dstWt - BATCH + 1) * dtypeSize;         // jumping to next column index
+                dstPtr += (gtrans.dstWt - BATCH) * dtypeSize;         // jumping to next column index
             }
         }
         // Transpose the residual batch of rows 
@@ -173,9 +116,10 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
     }
 }
 
-/* Generalized batch transpose to optimize 64-byte cache-line utilization.
- * Due to random starting address, 32-byte consecutive write addresses result in 33/64 chance of utilizing a single cache line, while the remaining 31/64 chance is in 2 cache lines.
- * Simulations indicate that the consecutive write address of 32-byte is the sweet spot. 
+/* Generalized batch transpose to optimize 64 - byte cache - line utilization.
+ * Due to random starting address, 32-byte consecutive write addresses results in 33/64 chance of utilizing single cache line, while the remaining 31/64 chance in 2 cache lines.
+ * Simulations indicates that the consecutive write addresses of 32-byte is the sweet spot. 
+ * To this end, we define BATCH = 31/gtrans.dtypeSize +1;
  */
 void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint64_t dstOffset, const G_Trans_Param gtrans)
 {
@@ -183,6 +127,7 @@ void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint6
     uint32_t* srcS4, * dstS4;
     uint16_t* srcS2, * dstS2;
     uint8_t* srcS1, * dstS1;
+    
     switch (gtrans.dtypeSize) {
     case 1:
         srcS1 = (uint8_t*)src + srcOffset;
@@ -206,19 +151,20 @@ void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint6
     case 3: 
         srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
         dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
-        G1_Transpose<uint32_t, 8>(srcS1, dstS1, gtrans);
+        G1_Transpose<uint32_t, 11>(srcS1, dstS1, gtrans);
         break;
     default:  // cases: 5, 6, 7
         srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
         dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
-        G1_Transpose<uint64_t, 4>(srcS1, dstS1, gtrans);
+        G1_Transpose<uint64_t, 5>(srcS1, dstS1, gtrans);
         break;
     }
 }
+
 void Permute_TypeA_Kernel(const void* src, void* dst, const uint64_t src_ndim, 
         uint64_t * src_dims_new, uint64_t* src_wt_new, uint64_t* dst_wt_new, const G_Trans_Param gtrans)
 {
-    int i, k;
+    int64_t i, k;
     uint64_t  src_idx[MAX_DIM] = { 0 };
     uint64_t srcOffset, dstOffset;
     switch (src_ndim) {
@@ -288,11 +234,11 @@ int Permute_TypeA(const void* src, void* dst, uint64_t dtypeSize, const uint64_t
         src_order[i]++;
 
     G_Trans_Param gtrans;
-    gtrans.dtypeSize = (int)dtypeSize;
-    gtrans.rows = (int)src_dims[src_order[src_ndim - 2]];
-    gtrans.cols = (int)src_dims[src_ndim - 1];
-    gtrans.srcWt = (int)src_wt[src_order[src_ndim - 2]];
-    gtrans.dstWt = (int)dst_wt[src_ndim-1];
+    gtrans.dtypeSize = dtypeSize;
+    gtrans.rows = src_dims[src_order[src_ndim - 2]];
+    gtrans.cols = src_dims[src_ndim - 1];
+    gtrans.srcWt = src_wt[src_order[src_ndim - 2]];
+    gtrans.dstWt = dst_wt[src_ndim-1];
  
     //A key advantage of the following implementation is that each permuted dimension is treated independently. 
     //Moreover, the index computation does not involve multiplications/divisions.
@@ -309,7 +255,7 @@ int Permute_TypeA(const void* src, void* dst, uint64_t dtypeSize, const uint64_t
     return 0;
 }
 
-/*~~~~~~~~~~~~~~~ Multi-thread implementation of Permute_TypeA() ~~~~~~~~~~~~~~~
+/*~~~~~~~~~~~~~~~ Multi - thread implementation of Permute_TypeA() ~~~~~~~~~~~~~~~
 * The first dimension, [0], is partitioned evenly for each thread. 
 * Memory write is guaranteed to be non-overlapping, thus no need to involve mutex.
 */
@@ -336,11 +282,11 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
         src_order[i]++;
 
     G_Trans_Param gtrans;
-    gtrans.dtypeSize = (int)dtypeSize;
-    gtrans.rows = (int)src_dims[src_order[src_ndim - 2]];
-    gtrans.cols = (int)src_dims[src_ndim - 1];
-    gtrans.srcWt = (int)src_wt[src_order[src_ndim - 2]];
-    gtrans.dstWt = (int)dst_wt[src_ndim - 1];
+    gtrans.dtypeSize = dtypeSize;
+    gtrans.rows = src_dims[src_order[src_ndim - 2]];
+    gtrans.cols = src_dims[src_ndim - 1];
+    gtrans.srcWt = src_wt[src_order[src_ndim - 2]];
+    gtrans.dstWt = dst_wt[src_ndim - 1];
 
     //A key advantage of the following implementation is that each permuted dimension is treated independently. 
     //Moreover, the index computation does not involve multiplications/divisions.
@@ -449,7 +395,7 @@ int Permute_TypeB(const void* src, void* dst, uint64_t dtypeSize, const uint64_t
     return 0;
 }
 
-/* ~~~~~~~~~~~~~~~ Multi-thread implementation of Permute_TypeB() ~~~~~~~~~~~~~~~
+/* ~~~~~~~~~~~~~~~ Multi - thread implementation of Permute_TypeB() ~~~~~~~~~~~~~~~
 * The first dimension, [0], is partitioned evenly for each thread. 
 * Memory write is guaranteed to be non-overlapping, thus no need to involve mutex.
 */
@@ -507,11 +453,11 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
 
     uint64_t i, n;
     /*~~~~~~~~~~~~~~~~ squeeze dims with size 1 ~~~~~~~~~~~~~~~~
-    * EX. 1.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [2, 3, 4, 1, 6, 0,  5]
+    * EX. 1.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [2, 4, 3, 1, 6, 0,  5]
     *          src_nums[8, 9, 1, 6, 4, 6, 9, 10]  ==>  [8, 9, 6, 4, 6, 9, 10]
     * 
-    * EX. 2.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [1, 2, 3, 0, 5, 4]
-    *          src_nums[8, 9, 1, 6, 4, 6, 1, 10]  ==>  [8, 9, 6, 4, 6, 10]
+    * EX. 2.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [1, 2, 4, 3, 0, 5]
+    *          src_nums[1, 8, 9, 6, 4, 6, 1, 10]  ==>  [8, 9, 6, 4, 6, 10]
     * 
     * The following algorithm has O(n) time and space complexity
     */
@@ -614,7 +560,7 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
             fprintf(stderr, "%llu ", trim_dims[i]);
     }
     
-    /*In case the last dim is unpermuted, check if it fits into a single data type.
+    /*In case the last dim is unmuted, check it fits into a single data type.
     * EX. perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]
     *     trim_dims[20, 8, 16, 12, 8]   ==> trim_dims[20, 8, 16, 12]
     *     dtypeSize = 1                 ==> dtypeSize = 8
@@ -664,7 +610,7 @@ void permute_validation()
 
     const int count = 200;      // number of random tests
     for(int cnt=count; cnt>0; cnt--){
-        //Compute the overall number of elements, and the inverse permute index array
+        // compute the overall number of elements, and the inverse permute index array
         nElmt = 1;
         for (i = 0; i < src_ndim; i++) {
             nElmt *= (uint32_t)src_dims[i];

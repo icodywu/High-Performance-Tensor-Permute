@@ -31,13 +31,14 @@ EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
 This case is treated differently, wherein the last dim is also reduced to the size of 1 and the dtype of uint64_t is utilized to move data in an overlapped manner. 
 To avoid the write conflict under multi-thread, the boundary data is moved precisely by using memcpy of 7 bytes. 
  
-Step 4. Apply the proposed generalized batch transpose over the case where the last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1; \
-The proposed generalized batch transpose technique is a generalization of the batch transpose. 
-It takes advantage of the cache line by creating column-wise consecutive write addresses.  
+Step 4. Case 1. The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1. \
+Fundamentally, such permutation can be viewed as a generalized transpose. 
+We thus propose an innovative generalized batch transpose technique, which effectively takes advantage of the cache line by creating column-wise consecutive write addresses.  
 For special dtypeSize in {3, 5, 6, 7} (which is created from the merging of the small last dim), the data movement in an overlapped manner. The details are provided in \
 void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint64_t dstOffset, const G_Trans_Param gtrans)
 
-Apply memcpy() to move the entire last dim of data over the case perm_idx[ndim-1] == ndim-1. The details are given in \
+Case 2. The last dim is unpermuted, i.e., perm_idx[ndim-1] == ndim-1.
+In this case, we deploy memcpy() to move the entire last dim of data (recall the last dim size is coerced to be greater than 8B). The details are given in \
 void Permute_TypeB_Kernel(const void* src, void* dst, uint64_t dtypeSize, const uint64_t src_ndim,
                                   uint64_t* src_dims, uint64_t* src_wt, uint64_t* dst_wt);
     

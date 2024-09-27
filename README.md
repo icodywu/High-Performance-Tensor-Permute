@@ -1,3 +1,4 @@
+### **Algorithm Description**
 This C++ code provides the most efficient implementation for the tensor permute function: \
 int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     uint64_t src_ndim, uint64_t* permute_idx, uint64_t* dst_dims, int nThreads = 1);
@@ -49,11 +50,11 @@ By default, it utilizes a single thread. Multi-thread is activated by setting th
 By partitioning evenly along the first dim, i.e., [0], the proposed multi-thread operations linearly reduce the running time,
 until it saturates the memory bandwidth.
  
-
+### **Algorithm Validation and Measurement**
 Function permute_validation() uses the randomly generated tensors and permutations to test against the equality
 permute(tensor, perm_idx) -> permuted_tensor
 permute(permuted_tensor, perm_inv) = tensor, where perm_inv is the inverse array of perm_idx.
 The first set of tensor dimensions and perm_idx is hand-designed to test a particular corner case
 whereas the remaining test cases are randomly generated to expand coverage. 
 
- Function measure_permute() measures the efficiency of the proposed permute()
+Function measure_permute() measures the efficiency of the proposed permute()

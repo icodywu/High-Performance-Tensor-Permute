@@ -24,25 +24,22 @@ EX.   perm_idx[2, 3,   5,  4,   6, 7,   0,  1]  ==>  [1,     3,    2,   4,    0 
 EX. perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
     trim_dims[20, 8, 16, 12, 8]   ==> trim_dims[20, 8, 16, 12]  \
     dtypeSize = 1                 ==> dtypeSize = 8             \
-This case is simply to treat the last dimension of 8 bytes to be the dim size of 1 with dtype of uint64_t. 
-    
+This case is simply to treat the last dimension of 8 bytes to be the dim size of 1 with dtype of uint64_t. \    
 EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
       trim_dims[20, 8, 16, 12, 7]   ==> trim_dims[20, 8, 16, 12]  \
       dtypeSize = 1                 ==> dtypeSize = 7             \
 This case is treated differently, wherein the last dim is also reduced to the size of 1 and the dtype of uint64_t is utilized to move data in an overlapped manner. 
 To avoid the write conflict under multi-thread, the boundary data is moved precisely by using memcpy of 7 bytes. 
  
-4. Case 1. The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1. \
+4. **Case 1.** The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1. \
 Fundamentally, such permutation can be viewed as a generalized transpose. 
 We thus propose an innovative generalized batch transpose technique, which effectively takes advantage of the cache line by creating column-wise consecutive write addresses.  
 For special dtypeSize in {3, 5, 6, 7} (which is created from the merging of the small last dim), the data movement in an overlapped manner. The details are provided in \
-void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint64_t dstOffset, const G_Trans_Param gtrans)
-
-Case 2. The last dim is unpermuted, i.e., perm_idx[ndim-1] == ndim-1.
+void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint64_t dstOffset, const G_Trans_Param gtrans) \
+**Case 2.** The last dim is unpermuted, i.e., perm_idx[ndim-1] == ndim-1.
 In this case, we deploy memcpy() to move the entire last dim of data (recall the last dim size is coerced to be greater than 8B). The details are given in \
 void Permute_TypeB_Kernel(const void* src, void* dst, uint64_t dtypeSize, const uint64_t src_ndim,
-                                  uint64_t* src_dims, uint64_t* src_wt, uint64_t* dst_wt);
-    
+                                  uint64_t* src_dims, uint64_t* src_wt, uint64_t* dst_wt); \    
 It is worth noting that both types of operations involve nearly no multiplication and completely no division in computing permuted indexes
 as opposed to the straightforward method.
  

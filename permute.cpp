@@ -1,3 +1,31 @@
+/* LICENSE
+The author makes NO WARRANTY or representation, either express or implied,
+with respect to this software, its quality, accuracy, merchantability, or
+fitness for a particular purpose.  This software is provided "AS IS", and you,
+its user, assume the entire risk as to its quality and accuracy.
+
+This software is copyright (C) 2024-2034, Cody (Yingquan) Wu.
+All Rights Reserved except as specified below.
+
+Permission is hereby granted to use, copy, modify, and distribute this
+software (or portions thereof) for any purpose, without fee, subject to these
+conditions:
+(1) If any part of the source code for this software is distributed, then this
+README file must be included, with this copyright and no-warranty notice
+unaltered; and any additions, deletions, or changes to the original files
+must be clearly indicated in the accompanying documentation.
+(2) If only executable code is distributed, then the accompanying
+documentation must state that "this software is based in part on the work of
+Cody Wu".
+(3) Permission for use of this software is granted only if the user accepts
+full responsibility for any undesirable consequences; the authors accept
+NO LIABILITY for damages of any kind.
+
+We specifically permit and encourage the use of this software as the basis of
+commercial products, provided that all warranty or liability claims are
+assumed by the product vendor.
+*/
+
 #include "permute.h"
 #define MAX_DIM 32
 #define DEBUG 0
@@ -102,7 +130,7 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
         for (n = 1; n < remBatch; n++)
             srcPtr[n] = srcPtr[0] + n * gtrans.srcWt * dtypeSize;
         for (n = gtrans.cols; n > 0; n--) {
-            for (j = 0; j < remBatch - 1; j++) {     // remBatch is locally defined as within batch so that compiler learns to unroll this for-loop
+            for (j = 0; j < remBatch - 1; j++) {     // remBatch is locally defined as within batch so that the compiler learns to unroll this for-loop
                 *(T*)dstPtr = *((T*)srcPtr[j]);
                 dstPtr += dtypeSize;
                 srcPtr[j] += dtypeSize;
@@ -114,9 +142,9 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
     }
 }
 
-/* Generalized batch transpose to optimize 64 - byte cache - line utilization.
- * Due to random starting address, 32-byte consecutive write addresses results in 33/64 chance of utilizing single cache line, while the remaining 31/64 chance in 2 cache lines.
- * Simulations indicates that the consecutive write addresses of 32-byte is the sweet spot. 
+/* Generalized batch transpose to optimize 64-byte cache-line utilization.
+ * Due to random starting address, 32-byte consecutive write addresses result in 33/64 chance of utilizing a single cache line, while the remaining 31/64 chance is in 2 cache lines.
+ * Simulations indicate that the consecutive write addresses of 32 bytes are the sweet spot. 
  * To this end, we define BATCH = 31/gtrans.dtypeSize +1;
  */
 void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint64_t dstOffset, const G_Trans_Param gtrans)
@@ -149,12 +177,12 @@ void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint6
     case 3: 
         srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
         dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
-        G1_Transpose<uint32_t, 11>(srcS1, dstS1, gtrans);
+        G1_Transpose<uint32_t, 12>(srcS1, dstS1, gtrans);
         break;
     default:  // cases: 5, 6, 7
         srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
         dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
-        G1_Transpose<uint64_t, 5>(srcS1, dstS1, gtrans);
+        G1_Transpose<uint64_t, 6>(srcS1, dstS1, gtrans);
         break;
     }
 }
@@ -253,7 +281,7 @@ int Permute_TypeA(const void* src, void* dst, uint64_t dtypeSize, const uint64_t
     return 0;
 }
 
-/*~~~~~~~~~~~~~~~ Multi - thread implementation of Permute_TypeA() ~~~~~~~~~~~~~~~
+/*~~~~~~~~~~~~~~~ Multi-thread implementation of Permute_TypeA() ~~~~~~~~~~~~~~~
 * The first dimension, [0], is partitioned evenly for each thread. 
 * Memory write is guaranteed to be non-overlapping, thus no need to involve mutex.
 */
@@ -336,7 +364,7 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TYPE B Permute  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* The last dimension is not permuted. Memcpy is utilized for move the entire last dim of data.
+* The last dimension is not permuted. Memcpy is utilized to move the entire last dim of data.
 */
 void Permute_TypeB_Kernel(const void* src, void* dst, uint64_t dtypeSize, const uint64_t src_ndim,
     uint64_t* src_dims, uint64_t* src_wt, uint64_t* dst_wt)
@@ -393,7 +421,7 @@ int Permute_TypeB(const void* src, void* dst, uint64_t dtypeSize, const uint64_t
     return 0;
 }
 
-/* ~~~~~~~~~~~~~~~ Multi - thread implementation of Permute_TypeB() ~~~~~~~~~~~~~~~
+/* ~~~~~~~~~~~~~~~ Multi-thread implementation of Permute_TypeB() ~~~~~~~~~~~~~~~
 * The first dimension, [0], is partitioned evenly for each thread. 
 * Memory write is guaranteed to be non-overlapping, thus no need to involve mutex.
 */
@@ -608,7 +636,7 @@ void permute_validation()
 
     const int count = 200;      // number of random tests
     for(int cnt=count; cnt>0; cnt--){
-        // compute the overall number of elements, and the inverse permute index array
+        //Compute the overall number of elements, and the inverse permute index array
         nElmt = 1;
         for (i = 0; i < src_ndim; i++) {
             nElmt *= (uint32_t)src_dims[i];
@@ -649,13 +677,13 @@ void permute_validation()
 //#define CLOCK_GETTIME(timestamp) clock_gettime(CLOCK_MONOTONIC, &(timestamp));
 #define CLOCK_GETTIME(timestamp)  timespec_get(&timestamp, TIME_UTC)
 #define TIMESPEC_TO_NSEC(ts) ((ts).tv_sec * NSEC_IN_SEC + (ts).tv_nsec)
+typedef uint16_t dtype;
 
 void measure_permute() {
 
     size_t numIters = 100;
     struct timespec start_time, end_time;
-    uint32_t* srcMtx, * dstMtx;
-    uint64_t dtypeSize = 4;
+    uint64_t dtypeSize = sizeof(dtype);
     uint64_t perm_idx[] = { 3, 2, 5, 6,   0, 1, 7, 4 };
     uint64_t src_dims[] = { 12, 8, 16, 20,   16, 18, 12, 24 };
     uint64_t src_ndim = 8;
@@ -674,10 +702,10 @@ void measure_permute() {
     for (i = 0; i < src_ndim; i++)
         fprintf(stderr, "%llu ", perm_idx[i]);
 
-    srcMtx = (uint32_t*)malloc(nElmt * dtypeSize);
-    dstMtx = (uint32_t*)malloc(nElmt * dtypeSize);
+    dtype* srcMtx = (dtype*)malloc(nElmt * dtypeSize);
+    dtype* dstMtx = (dtype*)malloc(nElmt * dtypeSize);
     for (i = 0; i < nElmt; i++)
-        srcMtx[i] = (uint32_t)i;
+        srcMtx[i] = (dtype)i;
 
     CLOCK_GETTIME(start_time);
     for (i = numIters; i >0; i--) {

@@ -4,14 +4,14 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     uint64_t src_ndim, uint64_t* permute_idx, uint64_t* dst_dims, int nThreads = 1);
 
 The code contains 4 unique optimization steps. \
-Step 1. Squeeze the trivial dimensions of size = 1. It takes O(n) time and space complexity. \
+1. Squeeze the trivial dimensions of size = 1. It takes O(n) time and space complexity. \
 EX.   perm_idx[2, 3, 5,  4, 1, 7, 0,  6] ==>  [1,  2, 4, 3, 0, 5]   \
       src_nums[1, 9, 12, 6, 4, 6, 1, 10] ==>  [9, 12, 6, 4, 6, 10]  \
 EX.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [2, 3,  5, 4, 1, 6, 0]   \
       src_nums[8, 9, 12, 6, 4, 6, 1, 10] ==>  [8, 9, 12, 6, 4, 6, 10]     
       
  
-Step 2. Compress the consecutive permuted dimensions. It takes O(n) time and space complexity. \
+2. Compress the consecutive permuted dimensions. It takes O(n) time and space complexity. \
 EX.   perm_idx[2, 3,  4,  5,    0, 1,   6, 7 ]  ==>  [1,           0,    2 ]  \
       src_nums[8, 9,  12, 6,    4, 6,   9, 10]  ==>  [8x9,  12x6x4x6,  9x10]  \     
 EX.   perm_idx[2, 3,  4,  5,  6, 7,     0,  1]  ==>  [1,              0  ]    \
@@ -19,7 +19,7 @@ EX.   perm_idx[2, 3,  4,  5,  6, 7,     0,  1]  ==>  [1,              0  ]    \
 EX.   perm_idx[2, 3,   5,  4,   6, 7,   0,  1]  ==>  [1,     3,    2,   4,    0  ]   \
       src_nums[8, 9,   12, 6,   4, 6,   9, 10]  ==>  [8x9,  12x6,  4,   6,   9x10]        
   
-Step 3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=8, as a single data type 
+3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=8, as a single data type 
          and then remove the last dim. \
 EX. perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
     trim_dims[20, 8, 16, 12, 8]   ==> trim_dims[20, 8, 16, 12]  \
@@ -32,7 +32,7 @@ EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
 This case is treated differently, wherein the last dim is also reduced to the size of 1 and the dtype of uint64_t is utilized to move data in an overlapped manner. 
 To avoid the write conflict under multi-thread, the boundary data is moved precisely by using memcpy of 7 bytes. 
  
-Step 4. Case 1. The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1. \
+4. Case 1. The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1. \
 Fundamentally, such permutation can be viewed as a generalized transpose. 
 We thus propose an innovative generalized batch transpose technique, which effectively takes advantage of the cache line by creating column-wise consecutive write addresses.  
 For special dtypeSize in {3, 5, 6, 7} (which is created from the merging of the small last dim), the data movement in an overlapped manner. The details are provided in \

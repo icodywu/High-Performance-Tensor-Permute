@@ -63,7 +63,7 @@ Installed RAM	32.0 GB \
 System type	64-bit operating system, x64-based processor
 
 
-**Tensor: dtype=uint16_t; dims={ 12, 32, 8, 16, 24, 16, 20, 3 }; size=2.1 GB** \
+**Tensor: dtype=uint16_t, dims={ 12, 32, 8, 16, 24, 16, 20, 3 }, size=2.1 GB** 
 | Permte_idx | This Speed (GB/s) | Torch Speed (GB/s) | Speed Ratio |
 |----------|----------|------------|--------|
 | {2 0 1 6 7 3 4 5}   |  3.296   | 1.090 | 3.02 |
@@ -78,7 +78,9 @@ System type	64-bit operating system, x64-based processor
 | {6 5 4 3 2 1 0 7}   | 1.455    | 0.112  | 13.00 |
 
 
-**Tensor: dtype=uint16_t; dims={ 12, 32, 28, 16, 24, 16, 20, 4 }; size=9.9 GB** \
+
+       
+**Tensor: dtype=uint16_t, dims={ 12, 32, 28, 16, 24, 16, 20, 4 }, size=9.9 GB** 
 | Permte_idx | This Speed (GB/s) | Torch Speed (GB/s) | Speed Ratio |
 |----------|----------|------------|--------|
 | {2 0 1 6 7 3 4 5}   |  2.846   | 0.208   | 13.68 |

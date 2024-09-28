@@ -54,13 +54,13 @@ The first set of tensor dimensions and perm_idx is hand-designed to test a parti
 whereas the remaining test cases are randomly generated to expand coverage. 
 
 ## **Performance Measurements and Comparisons**
-Function measure_permute() measures the efficiency of the proposed permute(). \
+Function measure_permute() measures the efficiency of the proposed permute(). 
 
 We measured the proposed permute() against the PyTorch torch.permute() (the version on 09/25/2024) under a single thread. \
 **System setting**: \
 Processor	Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz   2.59 GHz \
 Installed RAM	32.0 GB \
-System type	64-bit operating system, x64-based processor\
+System type	64-bit operating system, x64-based processor
 
 
 **Tensor: dtype=uint16_t; dims={ 12, 32, 8, 16, 24, 16, 20, 3 }; size=2.1 GB** \
@@ -77,5 +77,22 @@ System type	64-bit operating system, x64-based processor\
 | {4 5 6 7 0 1 2 3}   | 1.779    | 0.144  | 12.35 |
 | {6 5 4 3 2 1 0 7}   | 1.455    | 0.112  | 13.00 |
 
-   
+
+**Tensor: dtype=uint16_t; dims={ 12, 32, 28, 16, 24, 16, 20, 4 }; size=9.9 GB** \
+| Permte_idx | This Speed (GB/s) | Torch Speed (GB/s) | Speed Ratio |
+|----------|----------|------------|--------|
+| {2 0 1 6 7 3 4 5}   |  2.846   | 0.208   | 13.68 |
+|  {4 5 6 7 1 2 3 0}  |  0.941   | 0.088   | 10.69 |
+| {1 2 3 0 4 5 6 7}   |  8.580   | 0.192   | 44.69 | 
+| {4 5 1 2 3 0 6 7}   | 4.051    | 0.201   | 20.15 |
+| {6 7 4 5 1 2 3 0}   | 1.048    | 0.092  | 11.39 |
+| {6 7 0 1 4 5 2 3}   | 2.628    | 0.182  | 14.44 |
+| {6 0 1 4 5 2 3 7}   | 2.650    | 0.167  | 15.87 | 
+| {6 5 4 0 1 2 3 7}   | 1.154    | 0.138  | 8.36  |
+| {4 5 6 7 0 1 2 3}   | 1.656    | 0.084  | 19.71 |
+| {6 5 4 3 2 1 0 7}   | 1.437    | 0.069  | 20.83 |
+
+**Observations** \
+1. The proposed algorithm achieves high performance regardless of permute order, while torch.permute() varies dramatically.
+2. The proposed algorithm maintains high performance even when memory is strained (note the second case utilizes 20 GB out of 32 GB DRAM), whereas torch.permute() suffers from a strained memory.
 

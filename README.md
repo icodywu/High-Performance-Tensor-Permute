@@ -95,6 +95,7 @@ System type	64-bit operating system, x64-based processor
 | {6 5 4 3 2 1 0 7}   | 1.437    | 0.069  | 20.83 |
 
 **Observations** 
-1. The proposed algorithm achieves high performance regardless of permute order, while torch.permute() varies dramatically.
-2. The proposed algorithm maintains high performance even when memory is strained (the second case utilizes 20 GB out of 32 GB DRAM), whereas torch.permute() suffers from a strained memory.
+1. The proposed permute() achieves high performance regardless of permute order, while torch.permute() varies dramatically.
+2. The proposed permute() maintains high performance even when memory is strained (the second case utilizes 20 GB out of 32 GB DRAM), whereas torch.permute() suffers from a strained memory.
+3. The proposed permute() outperforms the benchmark torch.permute() by 3-20X in all test cases. 
 

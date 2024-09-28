@@ -46,11 +46,36 @@ By default, it utilizes a single thread. Multi-thread is activated by setting th
 By partitioning evenly along the first dim, i.e., [0], the proposed multi-thread operations linearly reduce the running time,
 until it saturates the memory bandwidth.
  
-## **Algorithm Validation and Performance Measurement**
+## **Algorithm Validation**
 Function permute_validation() uses the randomly generated tensors and permutations to test against the equality
 permute(tensor, perm_idx) -> permuted_tensor
 permute(permuted_tensor, perm_inv) = tensor, where perm_inv is the inverse array of perm_idx.
 The first set of tensor dimensions and perm_idx is hand-designed to test a particular corner case
 whereas the remaining test cases are randomly generated to expand coverage. 
 
-Function measure_permute() measures the efficiency of the proposed permute()
+## **Performance Measurements and Comparisons**
+Function measure_permute() measures the efficiency of the proposed permute(). \
+
+We measured the proposed permute() against the PyTorch torch.permute() (the version on 09/25/2024) under a single thread. \
+**System setting**: \
+Processor	Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz   2.59 GHz \
+Installed RAM	32.0 GB \
+System type	64-bit operating system, x64-based processor\
+
+
+**Tensor: dtype=uint16_t; dims={ 12, 32, 8, 16, 24, 16, 20, 3 }; size=2.1 GB** \
+| Permte_idx | This Speed (GB/s) | Torch Speed (GB/s) | Speed Ratio |
+|----------|----------|------------|--------|
+| {2 0 1 6 7 3 4 5}   |  3.296   | 1.090 | 3.02 |
+|  {4 5 6 7 1 2 3 0}  |  1.301   | 0.145  | 8.97 |
+| {1 2 3 0 4 5 6 7}   |  8.474   | 3.603  | 2.35 | 
+| {4 5 1 2 3 0 6 7}   | 3.237    | 0.743  | 4.36 |
+| {6 7 4 5 1 2 3 0}   | 1.204    | 0.138  | 8.72 |
+| {6 7 0 1 4 5 2 3}   | 2.801    | 0.263  | 10.65 |
+| {6 0 1 4 5 2 3 7}   | 4.083    | 0.217  | 18.82 | 
+| {6 5 4 0 1 2 3 7}   | 1.273    | 0.165  | 7.72  |
+| {4 5 6 7 0 1 2 3}   | 1.779    | 0.144  | 12.35 |
+| {6 5 4 3 2 1 0 7}   | 1.455    | 0.112  | 13.00 |
+
+   
+

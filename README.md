@@ -78,7 +78,7 @@ System type	64-bit operating system, x64-based processor
 | {6 5 4 3 2 1 0 7}   | 1.455    | 0.112  | 13.00 |
 
 
-
+\
        
 **Tensor: dtype=uint16_t, dims={ 12, 32, 28, 16, 24, 16, 20, 4 }, size=9.9 GB** 
 | Permte_idx | This Speed (GB/s) | Torch Speed (GB/s) | Speed Ratio |
@@ -94,7 +94,7 @@ System type	64-bit operating system, x64-based processor
 | {4 5 6 7 0 1 2 3}   | 1.656    | 0.084  | 19.71 |
 | {6 5 4 3 2 1 0 7}   | 1.437    | 0.069  | 20.83 |
 
-**Observations** \
+**Observations** 
 1. The proposed algorithm achieves high performance regardless of permute order, while torch.permute() varies dramatically.
-2. The proposed algorithm maintains high performance even when memory is strained (note the second case utilizes 20 GB out of 32 GB DRAM), whereas torch.permute() suffers from a strained memory.
+2. The proposed algorithm maintains high performance even when memory is strained (the second case utilizes 20 GB out of 32 GB DRAM), whereas torch.permute() suffers from a strained memory.
 

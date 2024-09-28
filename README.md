@@ -3,7 +3,7 @@ This C++ code provides the most efficient implementation for the tensor permute 
 int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     uint64_t src_ndim, uint64_t* permute_idx, uint64_t* dst_dims, int nThreads = 1);
 
-The code contains 4 unique optimization steps. \
+**The code/algorithm contains 4 unique optimization steps.** 
 1. Squeeze the trivial dimensions of size = 1. It takes O(n) time and space complexity. \
 EX.   perm_idx[2, 3, 5,  4, 1, 7, 0,  6] ==>  [1,  2, 4, 3, 0, 5]   \
       src_nums[1, 9, 12, 6, 4, 6, 1, 10] ==>  [9, 12, 6, 4, 6, 10]  \

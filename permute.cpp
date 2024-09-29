@@ -341,7 +341,6 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
             gtrans.rows = dim0 + 1;
         }
         threads[i] = std::thread(Permute_TypeA_Kernel, srcPtr, dstPtr, src_ndim, src_dims_1, src_wt_new, dst_wt_new, gtrans);
-        threads[i].join();
         srcPtr += src_dims_1[0] * src_wt_new[0] * dtypeSize;
         dstPtr += src_dims_1[0] * dst_wt_new[0] * dtypeSize;        
     }
@@ -351,12 +350,12 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
                 gtrans.rows = dim0;
             }
             threads[i] = std::thread(Permute_TypeA_Kernel, srcPtr, dstPtr, src_ndim, src_dims_2, src_wt_new, dst_wt_new, gtrans);
-            threads[i].join();
             srcPtr += src_dims_2[0] * src_wt_new[0] * dtypeSize;
             dstPtr += src_dims_2[0] * dst_wt_new[0] * dtypeSize;            
         }
     }
-
+    for(int i=0; i<(dim0?nThreads:rThreads); i++)
+        threads[i].join(); 
     return 0;
 }
 
@@ -448,18 +447,18 @@ int Permute_TypeB_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
     dstPtr = (uint8_t*)dst;
     for (int i = 0; i < rThreads; i++) {        
         threads[i] = std::thread(Permute_TypeB_Kernel, srcPtr, dstPtr, dtypeSize, src_ndim, src_dims_1, src_wt, dst_wt);
-        threads[i].join();
         srcPtr += src_dims_1[0] * src_wt[0] * dtypeSize;
         dstPtr += src_dims_1[0] * dst_wt[0] * dtypeSize;
     }
     if (dim0 > 0) {
         for (int i = rThreads; i < nThreads; i++) {
             threads[i] = std::thread(Permute_TypeB_Kernel, srcPtr, dstPtr, dtypeSize, src_ndim, src_dims_2, src_wt, dst_wt);
-            threads[i].join();
             srcPtr += src_dims_2[0] * src_wt[0] * dtypeSize;
             dstPtr += src_dims_2[0] * dst_wt[0] * dtypeSize;                
         }
     }
+    for(int i=0; i<(dim0?nThreads:rThreads); i++)
+        threads[i].join(); 
     return 0;
 }
 

@@ -21,11 +21,15 @@
  * EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]
  *       trim_dims[20, 8, 16, 12, 7]   ==> trim_dims[20, 8, 16, 12]
  *       dtypeSize = 1                 ==> dtypeSize = 7
+ * EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]
+ *       trim_dims[20, 8, 16, 12, 16]   ==> trim_dims[20, 8, 16, 12]
+ *       dtypeSize = 1                 ==> dtypeSize = 16
  *
  * Step 4. Case 1. The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1.
  *   Fundamentally, such permutation can be viewed as a generalized transpose. We thus propose an innovative generalized batch transpose technique,
  *   which effectively takes advantage of the cache line by creating column-wise consecutive write addresses.
  *   For special dtypeSize in {3, 5, 6, 7} (which is created from the merging of the small last dim), the data movement in an overlapped manner. 
+ *   For special dtypeSize in {9, ..., 16} (which is created from the merging of the small last dim), the data movement utilizes memcpy().
  *   The details are provided in
  *   void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint64_t dstOffset, const G_Trans_Param gtrans)
  *

@@ -106,5 +106,7 @@ ___
 1. The proposed permute() achieves high performance regardless of permute order, while torch.permute() varies dramatically.
 2. The proposed permute() maintains high performance even when memory is strained (the second case utilizes 20 GB out of 32 GB DRAM), whereas torch.permute() suffers from a strained memory.
 3. The proposed permute() outperforms the benchmark torch.permute() by 3-20X in single thread in all test cases.
-4. The proposed permute() saturates performance with 4-thread in all test cases.
+4. The proposed permute() saturates performance with 4-thread in all test cases. For torch.permute(), under both wyas of os.environ['OMP_NUM_THREADS'] = '4' and torch.set_num_threads(4), the resulting throughput is similar or even worse than that of single-thread. 
+
+
 

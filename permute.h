@@ -16,14 +16,14 @@
  * EX.   perm_idx[2, 3,  4,  5,    0, 1,   6, 7 ]  ==>  [1,           0,    2 ]
  *       src_nums[8, 9,  12, 6,    4, 6,   9, 10]  ==>  [8*9,  12*6*4*6,  9*10]
  * 
- * Step 3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=8, as a single data type 
+ * Step 3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=16, as a single data type 
  *         and then remove the last dim.
  * EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]
- *       trim_dims[20, 8, 16, 12, 7]   ==> trim_dims[20, 8, 16, 12]
- *       dtypeSize = 1                 ==> dtypeSize = 7
+ *       trim_dims[20, 8, 16, 12, 12]   ==> trim_dims[20, 8, 16, 12]
+ *       dtypeSize = 1                 ==> dtypeSize = 12
  * EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]
- *       trim_dims[20, 8, 16, 12, 16]   ==> trim_dims[20, 8, 16, 12]
- *       dtypeSize = 1                 ==> dtypeSize = 16
+ *       trim_dims[20, 8, 16, 12, 6]   ==> trim_dims[20, 8, 16, 12]
+ *       dtypeSize = 1                 ==> dtypeSize = 6
  *
  * Step 4. Case 1. The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1.
  *   Fundamentally, such permutation can be viewed as a generalized transpose. We thus propose an innovative generalized batch transpose technique,

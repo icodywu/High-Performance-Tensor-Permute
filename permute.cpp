@@ -319,7 +319,7 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
     uint64_t src_dims_new[MAX_DIM] = { 0 };
     uint64_t src_wt_new[MAX_DIM] = { 0 }, dst_wt_new[MAX_DIM] = { 0 };
 
-    for (i = 0; i < src_ndim - 2; i++) {
+    for (i = 0; i <= src_ndim - 2; i++) {
         src_dims_new[i] = src_dims[src_order[i]];
         src_wt_new[i] = src_wt[src_order[i]];
         dst_wt_new[i] = dst_wt[src_order[i]];
@@ -354,7 +354,8 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
             dstPtr += src_dims_2[0] * dst_wt_new[0] * dtypeSize;            
         }
     }
-    for(int i=0; i<(dim0?nThreads:rThreads); i++)
+    if (dim0 == 0) nThreads = rThreads;     //effective number of  threads
+    for (int i = 0; i < nThreads; i++)
         threads[i].join(); 
     return 0;
 }
@@ -457,7 +458,8 @@ int Permute_TypeB_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
             dstPtr += src_dims_2[0] * dst_wt[0] * dtypeSize;                
         }
     }
-    for(int i=0; i<(dim0?nThreads:rThreads); i++)
+    if (dim0 == 0) nThreads = rThreads;     //effective number of  threads
+    for (int i = 0; i < nThreads; i++)
         threads[i].join(); 
     return 0;
 }
@@ -675,11 +677,12 @@ typedef uint16_t dtype;
 
 void measure_permute() {
 
-    size_t numIters = 100;
-    struct timespec start_time, end_time;
+    size_t numIters = 25;
+    struct timespec start_time, end_time;  
     uint64_t dtypeSize = sizeof(dtype);
-    uint64_t perm_idx[] = { 3, 2, 5, 6,   0, 1, 7, 4 };
-    uint64_t src_dims[] = { 12, 8, 16, 20,   16, 18, 12, 24 };
+    int nThrds = 8;
+    uint64_t perm_idx[] = {4, 5, 6, 7, 0, 1, 2, 3};
+    uint64_t src_dims[] = {12, 32, 28, 16, 24, 16, 20, 4};
     uint64_t src_ndim = 8;
     uint64_t perm_inv[MAX_DIM], dst_dims[MAX_DIM];
     size_t i, nElmt;
@@ -691,23 +694,27 @@ void measure_permute() {
 
     fprintf(stderr, "\nsrc_ndim=%llu, nElmt=%zu, Source dimensions\n", src_ndim, nElmt);
     for (i = 0; i < src_ndim; i++)
-        fprintf(stderr, "%llu ", src_dims[i]);
+        fprintf(stderr, "%llu, ", src_dims[i]);
     fprintf(stderr, "\nPermuted dimensions\n");
     for (i = 0; i < src_ndim; i++)
-        fprintf(stderr, "%llu ", perm_idx[i]);
+        fprintf(stderr, "%llu, ", perm_idx[i]);
+    fprintf(stderr, "\n");    
 
     dtype* srcMtx = (dtype*)malloc(nElmt * dtypeSize);
     dtype* dstMtx = (dtype*)malloc(nElmt * dtypeSize);
     for (i = 0; i < nElmt; i++)
         srcMtx[i] = (dtype)i;
 
-    CLOCK_GETTIME(start_time);
-    for (i = numIters; i >0; i--) {
-        permute(srcMtx, dstMtx, dtypeSize, src_dims, src_ndim, perm_idx, dst_dims);
+    for(int k=0; k<4; k++) {
+        nThrds = 1<<k;
+        CLOCK_GETTIME(start_time);
+        for (i = numIters; i >0; i--) {
+            permute(srcMtx, dstMtx, dtypeSize, src_dims, src_ndim, perm_idx, dst_dims, nThrds);
+        }
+        CLOCK_GETTIME(end_time);
+        double aveSecd = (double)(TIMESPEC_TO_NSEC(end_time) - TIMESPEC_TO_NSEC(start_time))/NSEC_IN_SEC / numIters;
+        printf("%zu iterations with ave %.6f s, thpt: %.3f GB/s, threads=%d\n", numIters, aveSecd, dtypeSize*nElmt/aveSecd/NSEC_IN_SEC, nThrds);
     }
-    CLOCK_GETTIME(end_time);
-
-    printf("\n%zu iterations with average %zu\n", numIters, (TIMESPEC_TO_NSEC(end_time) - TIMESPEC_TO_NSEC(start_time)) / numIters);
     free(srcMtx);
     free(dstMtx);
 }

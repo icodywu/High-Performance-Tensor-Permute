@@ -141,7 +141,48 @@ template<typename T, int BATCH>void G1_Transpose(void* src, void* dst, G_Trans_P
         }
     }
 }
-
+/*
+* Batch generalized transpose for the special dtypeSize = {9, 10, ..., 16}, respectively.
+* BATCH rows are transposed in batch so as to optimize caching
+* It utilizes precise memcpy() to move the "data" of dtypeSize bytes.
+*/
+template<int BATCH>void G2_Transpose(void* src, void* dst, G_Trans_Param gtrans)
+{
+    const int  remBatch = gtrans.rows % BATCH;
+    const uint64_t dtypeSize = gtrans.dtypeSize;
+    int64_t i, j, n, s_i;
+    uint8_t* dstPtr, * srcPtr[BATCH];
+  
+    for (i = s_i = 0; i < gtrans.rows - BATCH + 1; i += BATCH, s_i += BATCH * gtrans.srcWt) {
+        dstPtr = static_cast<uint8_t*>(dst) + i * dtypeSize;               // beginning of column no. i
+        srcPtr[0] = static_cast<uint8_t*>(src) + s_i * dtypeSize;          // beginning of row no. i 
+        for (n = 1; n < BATCH; n++)         // beginning of rows no. i+1, i+2, ..., i+7 
+            srcPtr[n] = srcPtr[0] + n * gtrans.srcWt * dtypeSize;
+        for (n = gtrans.cols; n > 0; n--) {  //Transpose the batch of rows in parallel
+            for (j = 0; j < BATCH; j++) { 
+                memcpy(dstPtr, srcPtr[j], dtypeSize);
+                dstPtr += dtypeSize;
+                srcPtr[j] += dtypeSize;
+            }
+            dstPtr += (gtrans.dstWt - BATCH) * dtypeSize;         // jumping to next column index
+        }
+    }
+    
+    if(remBatch) {  // Batch Transpose the residual of rows 
+        dstPtr = static_cast<uint8_t*>(dst) + i * dtypeSize;               // beginning of column no. i
+        srcPtr[0] = static_cast<uint8_t*>(src) + s_i * dtypeSize;          // beginning of row no. i 
+        for (n = 1; n < remBatch; n++)
+            srcPtr[n] = srcPtr[0] + n * gtrans.srcWt * dtypeSize;
+        for (n = gtrans.cols; n > 0; n--) {
+            for (j = 0; j < remBatch; j++) {     // remBatch is locally defined as within batch so that the compiler learns to unroll this for-loop
+                memcpy(dstPtr, srcPtr[j], dtypeSize);
+                dstPtr += dtypeSize;
+                srcPtr[j] += dtypeSize;
+            }
+            dstPtr += (gtrans.dstWt - remBatch) * dtypeSize;
+        }
+    }
+}
 /* Generalized batch transpose to optimize 64-byte cache-line utilization.
  * Due to random starting address, 32-byte consecutive write addresses result in 33/64 chance of utilizing a single cache line, while the remaining 31/64 chance is in 2 cache lines.
  * Simulations indicate that the consecutive write addresses of 32 bytes are the sweet spot. 
@@ -179,10 +220,25 @@ void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint6
         dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
         G1_Transpose<uint32_t, 12>(srcS1, dstS1, gtrans);
         break;
-    default:  // cases: 5, 6, 7
+    case 5:  
+        srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
+        dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
+        G1_Transpose<uint64_t, 7>(srcS1, dstS1, gtrans);
+        break;
+    case 6:
         srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
         dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
         G1_Transpose<uint64_t, 6>(srcS1, dstS1, gtrans);
+        break;
+    case 7:
+        srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
+        dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
+        G1_Transpose<uint64_t, 5>(srcS1, dstS1, gtrans);
+        break;
+    default:  // case {9, ..., 16}
+        srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
+        dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;
+        G2_Transpose<3>(srcS1, dstS1, gtrans);
         break;
     }
 }
@@ -593,8 +649,8 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     */
     if (perm_idx[trim_ndim - 1] == trim_ndim - 1) {
         uint64_t cpSize = trim_dims[trim_ndim - 1] * dtypeSize;  // the size of last dim
-        if (cpSize <= 8) {   
-            dtypeSize = cpSize;     // treat the last dim as a single data
+        if (cpSize <= 16) {   
+            dtypeSize = cpSize;     // treat the last dim as a single "data"
             trim_ndim--;            // get rid of the last dim
         }
     }

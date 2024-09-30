@@ -19,12 +19,12 @@ EX.   perm_idx[2, 3,  4,  5,  6, 7,     0,  1]  ==>  [1,              0  ]    \
 EX.   perm_idx[2, 3,   5,  4,   6, 7,   0,  1]  ==>  [1,     3,    2,   4,    0  ]   \
       src_nums[8, 9,   12, 6,   4, 6,   9, 10]  ==>  [8x9,  12x6,  4,   6,   9x10]        
   
-3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=8, as a single data type 
+3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=16, as a single data type 
          and then remove the last dim. \
 EX. perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
-    trim_dims[20, 8, 16, 12, 8]   ==> trim_dims[20, 8, 16, 12]  \
-    dtypeSize = 1                 ==> dtypeSize = 8             \
-This case is simply to treat the last dimension of 8 bytes to be the dim size of 1 with dtype of uint64_t. \    
+    trim_dims[20, 8, 16, 12, 16]   ==> trim_dims[20, 8, 16, 12]  \
+    dtypeSize = 1                 ==> dtypeSize = 16             \
+This case is simply to treat the last dimension of 16 bytes to be the dim size of 1 wherein memcpy() is utilized to copy data. \    
 EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
       trim_dims[20, 8, 16, 12, 7]   ==> trim_dims[20, 8, 16, 12]  \
       dtypeSize = 1                 ==> dtypeSize = 7             \
@@ -34,7 +34,8 @@ To avoid the write conflict under multi-thread, the boundary data is moved preci
 4. **Case 1.** The last dim is permuted, i.e., perm_idx[ndim-1] != ndim-1. \
 Fundamentally, such permutation can be viewed as a generalized transpose. 
 We thus propose an innovative generalized batch transpose technique, which effectively takes advantage of the cache line by creating column-wise consecutive write addresses.  
-For special dtypeSize in {3, 5, 6, 7} (which is created from the merging of the small last dim), the data movement in an overlapped manner. \
+For special dtypeSize in {3, 5, 6, 7} (created from the merging of the small last dim), the data movement is achieved in an overlapped manner. \
+For special dtypeSize in {9, ..., 16} (created from the merging of the small last dim), the data movement utilizes memcpy(). \
 The details are provided in void Generalized_Transpose() \
 **Case 2.** The last dim is unpermuted, i.e., perm_idx[ndim-1] == ndim-1.
 In this case, we deploy memcpy() to move the entire last dim of data (recall the last dim size is coerced to be greater than 8B). \

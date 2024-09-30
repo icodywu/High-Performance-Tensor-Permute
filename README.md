@@ -1,9 +1,9 @@
 ## **Algorithm Description**
-This C++ code provides the most efficient implementation for the tensor permute function: \
+This C++ code provides the most efficient implementation for the tensor permute function, which beats torch.permute() by 3-20X: \
 int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     uint64_t src_ndim, uint64_t* permute_idx, uint64_t* dst_dims, int nThreads = 1);
 
-**The code/algorithm contains 4 unique optimization steps.** 
+**The code/algorithm incorporates 4 unique optimization steps.** 
 1. Squeeze the trivial dimensions of size = 1. It takes O(n) time and space complexity. \
 EX.   perm_idx[2, 3, 5,  4, 1, 7, 0,  6] ==>  [1,  2, 4, 3, 0, 5]   \
       src_nums[1, 9, 12, 6, 4, 6, 1, 10] ==>  [9, 12, 6, 4, 6, 10]  \
@@ -46,7 +46,7 @@ By default, it utilizes a single thread. Multi-thread is activated by setting th
 By partitioning evenly along the first dim, i.e., [0], the proposed multi-thread operations linearly reduce the running time,
 until it saturates the memory bandwidth.
  
-## **Algorithm Validation**
+## **Validation**
 Function permute_validation() uses the randomly generated tensors and permutations to test against the equality
 permute(tensor, perm_idx) -> permuted_tensor
 permute(permuted_tensor, perm_inv) = tensor, where perm_inv is the inverse array of perm_idx.
@@ -106,7 +106,7 @@ ___
 1. The proposed permute() achieves high performance regardless of permute order, while torch.permute() varies dramatically.
 2. The proposed permute() maintains high performance even when memory is strained (the second case utilizes 20 GB out of 32 GB DRAM), whereas torch.permute() suffers from a strained memory.
 3. The proposed permute() outperforms the benchmark torch.permute() by 3-20X in single thread in all test cases.
-4. The proposed permute() saturates performance with 4-thread in all test cases. For torch.permute(), under both wyas of os.environ['OMP_NUM_THREADS'] = '4' and torch.set_num_threads(4), the resulting throughput is similar or even worse than that of single-thread. 
+4. The proposed permute() (nearly) saturates performance with 4-thread in all test cases. For torch.permute(), under both setups of os.environ['OMP_NUM_THREADS'] = '4' and torch.set_num_threads(4), the resulting throughput is similar or even worse than that of single-thread. 
 
 
 

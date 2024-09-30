@@ -1,3 +1,4 @@
+# This file measures the performance of torch.permute().
 import torch
 import time
 import os

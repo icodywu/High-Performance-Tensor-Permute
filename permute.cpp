@@ -36,12 +36,12 @@ assumed by the product vendor.
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <algorithm> // For std::shuffle
-#include <random>    // For std::random_device and std::mt19937
-#include <thread>    // for std::thread
+#include <algorithm> // For shuffle
+#include <random>    // For random_device and mt19937
+#include <thread>    // for thread
 #include <vector>
 
-
+using namespace std;
 typedef struct {
     int64_t dtypeSize;     // bytes of data type
     int64_t rows, cols;    // numbers of rows and columns
@@ -49,7 +49,7 @@ typedef struct {
 } G_Trans_Param;
 
 /* Batch Generalized Transpose, wherein 2D transpose is a special case with srcWt=cols, dstWt=rows
-* BATCH rows are transposed in batch so as to optimize caching
+* BATCH rows are transposed in batch to optimize caching
 */
 template <typename T, int BATCH> void G_Transpose(T* src, T* dst, G_Trans_Param gtrans)
 {
@@ -380,7 +380,7 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
         src_wt_new[i] = src_wt[src_order[i]];
         dst_wt_new[i] = dst_wt[src_order[i]];
     }
-    std::vector<std::thread> threads(nThreads);
+    vector<thread> threads(nThreads);
     uint64_t src_dims_1[MAX_DIM], src_dims_2[MAX_DIM];
     uint8_t* srcPtr, * dstPtr;
     memcpy(src_dims_1, src_dims_new, src_ndim * sizeof(uint64_t));
@@ -396,7 +396,7 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
         if (src_ndim == 2) {
             gtrans.rows = dim0 + 1;
         }
-        threads[i] = std::thread(Permute_TypeA_Kernel, srcPtr, dstPtr, src_ndim, src_dims_1, src_wt_new, dst_wt_new, gtrans);
+        threads[i] = thread(Permute_TypeA_Kernel, srcPtr, dstPtr, src_ndim, src_dims_1, src_wt_new, dst_wt_new, gtrans);
         srcPtr += src_dims_1[0] * src_wt_new[0] * dtypeSize;
         dstPtr += src_dims_1[0] * dst_wt_new[0] * dtypeSize;        
     }
@@ -405,7 +405,7 @@ int Permute_TypeA_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
             if (src_ndim == 2) {
                 gtrans.rows = dim0;
             }
-            threads[i] = std::thread(Permute_TypeA_Kernel, srcPtr, dstPtr, src_ndim, src_dims_2, src_wt_new, dst_wt_new, gtrans);
+            threads[i] = thread(Permute_TypeA_Kernel, srcPtr, dstPtr, src_ndim, src_dims_2, src_wt_new, dst_wt_new, gtrans);
             srcPtr += src_dims_2[0] * src_wt_new[0] * dtypeSize;
             dstPtr += src_dims_2[0] * dst_wt_new[0] * dtypeSize;            
         }
@@ -490,7 +490,7 @@ int Permute_TypeB_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
         dst_wt[perm_idx[i - 1]] = dst_wt[perm_idx[i]] * src_dims[perm_idx[i]];
     }
 
-    std::vector<std::thread> threads(nThreads);
+    vector<thread> threads(nThreads);
     uint64_t src_dims_1[MAX_DIM], src_dims_2[MAX_DIM];
     uint8_t* srcPtr, *dstPtr;
     memcpy(src_dims_1, src_dims, src_ndim * sizeof(uint64_t));
@@ -503,13 +503,13 @@ int Permute_TypeB_MThread(const void* src, void* dst, uint64_t dtypeSize, const 
     srcPtr = (uint8_t*)src;
     dstPtr = (uint8_t*)dst;
     for (int i = 0; i < rThreads; i++) {        
-        threads[i] = std::thread(Permute_TypeB_Kernel, srcPtr, dstPtr, dtypeSize, src_ndim, src_dims_1, src_wt, dst_wt);
+        threads[i] = thread(Permute_TypeB_Kernel, srcPtr, dstPtr, dtypeSize, src_ndim, src_dims_1, src_wt, dst_wt);
         srcPtr += src_dims_1[0] * src_wt[0] * dtypeSize;
         dstPtr += src_dims_1[0] * dst_wt[0] * dtypeSize;
     }
     if (dim0 > 0) {
         for (int i = rThreads; i < nThreads; i++) {
-            threads[i] = std::thread(Permute_TypeB_Kernel, srcPtr, dstPtr, dtypeSize, src_ndim, src_dims_2, src_wt, dst_wt);
+            threads[i] = thread(Permute_TypeB_Kernel, srcPtr, dstPtr, dtypeSize, src_ndim, src_dims_2, src_wt, dst_wt);
             srcPtr += src_dims_2[0] * src_wt[0] * dtypeSize;
             dstPtr += src_dims_2[0] * dst_wt[0] * dtypeSize;                
         }
@@ -556,7 +556,7 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
         }
     }
     if (squz_ndim < 2) {
-        fprintf(stderr, "the input matrix is an array, no need to permute\n");
+        cerr<< "the input matrix is an array, no need to permute\n";
         return 0;
     }
 
@@ -571,9 +571,9 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
             perm_idx[n++] = perm_idx[i] - perm_off[perm_idx[i]];
     }
     if (DEBUG) {
-        fprintf(stderr, "\nSqueezed dimensions\n");
+        cerr<<"\nSqueezed dimensions\n";
         for (i = 0; i < squz_ndim; i++)
-            fprintf(stderr, "%llu ", perm_idx[i]);
+            cerr << perm_idx[i] << " ";
     }
 
     /*~~~~~~~~~~~~~~~~  Merge consecutive permuted dims ~~~~~~~~~~~~~~~~ 
@@ -630,12 +630,12 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     }
 
     if (DEBUG) {
-        fprintf(stderr, "\nPermute after trimming consecutive dimensions\n");
+        cerr<< "\nPermute after trimming consecutive dimensions\n";
         for (i = 0; i < trim_ndim; i++)
-            fprintf(stderr, "%llu ", perm_idx[i]);
-        fprintf(stderr, "\ntrimmed dimensions\n");
+            cerr<< perm_idx[i] << " ";
+        cerr<< "\ntrimmed dimensions\n";
         for (i = 0; i < trim_ndim; i++)
-            fprintf(stderr, "%llu ", trim_dims[i]);
+            cerr << trim_dims[i] << " ";
     }
     
     /*In case the last dim is unmuted, check it fits into a single data type.
@@ -656,7 +656,7 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     }
  
     if (1 == trim_ndim) {
-        fprintf(stderr, "No need to permute\n");
+        cerr<< "No need to permute\n";
         return 0;
     }
     if (nThreads == 1) {
@@ -681,10 +681,10 @@ void permute_validation()
     uint64_t perm_idx[8] = { 4, 5, 6, 3, 0, 1, 2, 7 };  
     uint64_t src_dims[8] = { 4, 5, 6, 8, 9, 10, 12, 7};
     uint64_t perm_inv[MAX_DIM], dst_dims[MAX_DIM];
-    uint32_t i, nElmt;
+    uint64_t i, nElmt;
     
     // Initialize a random number generator with the seed
-    std::mt19937 g(0);
+    mt19937 g(0);
 
     const int count = 200;      // number of random tests
     for(int cnt=count; cnt>0; cnt--){
@@ -715,14 +715,14 @@ void permute_validation()
         delete[] dstMtx;
 
         // Shuffle the permute index array 
-        std::shuffle(perm_idx, perm_idx + src_ndim, g); 
+        shuffle(perm_idx, perm_idx + src_ndim, g); 
 
         for (i = 0; i < src_ndim; i++) {
             src_dims[i] = rand() % 8 + 1;  // each dimension width in [1, 10]
         }
     }
 
-    std::cout << "Permute has been validated by " << count << " random tests" << std::endl;
+    cout << "Permute has been validated by " << count << " random tests" << endl;
 }
 
 #define NSEC_IN_SEC (1000000000L)
@@ -748,13 +748,13 @@ void measure_permute() {
         perm_inv[perm_idx[i]] = i;
     }
 
-    fprintf(stderr, "\nsrc_ndim=%llu, nElmt=%zu, Source dimensions\n", src_ndim, nElmt);
+    cout<<"\nsrc_ndim=" << src_ndim <<", nElmt =" << nElmt <<", dtypeSize ="<< dtypeSize <<", Source dimensions\n";
     for (i = 0; i < src_ndim; i++)
-        fprintf(stderr, "%llu, ", src_dims[i]);
-    fprintf(stderr, "\nPermuted dimensions\n");
+        cout << src_dims[i] << " ";
+    cout << "\nPermuted dimensions\n";
     for (i = 0; i < src_ndim; i++)
-        fprintf(stderr, "%llu, ", perm_idx[i]);
-    fprintf(stderr, "\n");    
+        cout << perm_idx[i] << " ";
+    cout << endl; 
 
     dtype* srcMtx = (dtype*)malloc(nElmt * dtypeSize);
     dtype* dstMtx = (dtype*)malloc(nElmt * dtypeSize);

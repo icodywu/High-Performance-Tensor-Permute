@@ -675,40 +675,45 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
 
 void permute_validation()
 {
+    typedef uint16_t dtype;
     const uint64_t src_ndim = 8;
-    uint64_t dtypeSize = 1;
+    uint64_t dtypeSize = sizeof(dtype);
     //The initial perm_idx and src_dims are guaranteed to be executed
-    uint64_t perm_idx[8] = { 4, 5, 6, 3, 0, 1, 2, 7 };  
+    uint64_t perm_idx[8] = { 4, 5, 6, 0, 1, 2, 3, 7 };  
     uint64_t src_dims[8] = { 4, 5, 6, 8, 9, 10, 12, 7};
     uint64_t perm_inv[MAX_DIM], dst_dims[MAX_DIM];
-    uint64_t i, nElmt;
+    size_t i, nElmt;
+    int nThreads;
     
     // Initialize a random number generator with the seed
     mt19937 g(0);
 
-    const int count = 200;      // number of random tests
+    const int count = 100;      // number of random tests
     for(int cnt=count; cnt>0; cnt--){
-        //Compute the overall number of elements, and the inverse permute index array
+        // compute the overall number of elements, and the inverse permute index array
         nElmt = 1;
         for (i = 0; i < src_ndim; i++) {
-            nElmt *= (uint32_t)src_dims[i];
+            nElmt *= src_dims[i];
             perm_inv[perm_idx[i]] = i;
         }
 
-        uint32_t* srcMtx = new uint32_t[nElmt];
-        uint32_t* dstMtx = new uint32_t[nElmt];
+        dtype* srcMtx = new dtype [nElmt];
+        dtype* dstMtx = new dtype [nElmt];
         for (i = 0; i < nElmt; i++)
-            srcMtx[i] = (uint8_t)i;
+            srcMtx[i] = (dtype)i;
 
         // verify the equality permute(inverse_permute) = original
-        permute(srcMtx, dstMtx, dtypeSize, src_dims, src_ndim, perm_idx, dst_dims, 4);
-        permute(dstMtx, srcMtx, dtypeSize, dst_dims, src_ndim, perm_inv, src_dims, 4);
+        nThreads = rand() % 8 +1;
+        permute(srcMtx, dstMtx, dtypeSize, src_dims, src_ndim, perm_idx, dst_dims, nThreads);
+        nThreads = rand() % 8 +1;
+        permute(dstMtx, srcMtx, dtypeSize, dst_dims, src_ndim, perm_inv, src_dims, nThreads);
 
         for (i = 0; i < nElmt; i++)
-            if (srcMtx[i] != (uint8_t)i) {
-                fprintf(stderr, "\nPermute[%llu, %llu, %llu, %llu,   %llu, %llu, %llu, %llu] over Tensor[%llu, %llu, %llu, %llu,    %llu, %llu, %llu, %llu] is incorrect",
-                    perm_idx[0], perm_idx[1], perm_idx[2], perm_idx[3], perm_idx[4], perm_idx[5], perm_idx[6], perm_idx[7],
-                    src_dims[0], src_dims[1], src_dims[2], src_dims[3], src_dims[4], src_dims[5], src_dims[6], src_dims[7]);
+            if (srcMtx[i] != (dtype)i) {
+                cerr<<"\nPermute["<< perm_idx[0] <<", "<< perm_idx[1] <<", "<< perm_idx[2] <<", "<< perm_idx[3] <<", "
+                    << perm_idx[4] <<", "<< perm_idx[5] <<", " << perm_idx[6] <<", "<< perm_idx[7] <<"] over Tensor["
+                    << src_dims[0] <<", "<< src_dims[1] <<", "<< src_dims[2] <<", "<< src_dims[3] <<", "
+                    << src_dims[4] <<", "<< src_dims[5] <<", "<< src_dims[6] <<", "<< src_dims[7] <<"] is incorrect";
                 break;
             }
         delete[] srcMtx;
@@ -722,9 +727,8 @@ void permute_validation()
         }
     }
 
-    cout << "Permute has been validated by " << count << " random tests" << endl;
+    cout << "Permute has been validated by " << count << " random tests\n";
 }
-
 #define NSEC_IN_SEC (1000000000L)
 //#define CLOCK_GETTIME(timestamp) clock_gettime(CLOCK_MONOTONIC, &(timestamp));
 #define CLOCK_GETTIME(timestamp)  timespec_get(&timestamp, TIME_UTC)

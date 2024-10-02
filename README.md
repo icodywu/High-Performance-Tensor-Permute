@@ -86,9 +86,9 @@ ___
 
        
 **Tensor: dtype=uint16_t, dims={ 12, 32, 28, 16, 24, 16, 20, 4 }, size=9.9 GB** 
-| Permute | This Throughput    | This Throughput     | This Throughput     | This Throughput     | Torch Throughput   | Thpt Ratio |
+| Permute | This Thrpt     | This Thrpt     | This Thrpt     | This Thrpt     | Torch Thrpt   | Thrpt Ratio |
 |----------|----------|----------|----------|----------|------------|--------|
-| Index Order           | 1-Thread (GB/s) | 2-Thread (GB/s) | 4-Thread (GB/s) | 8-Thread (GB/s) | 1-thread (GB/s) | 1-Thread | 
+| Order           | 1-Thrd (GB/s) | 2-Thrd (GB/s) | 4-Thrd (GB/s) | 8-Thrd (GB/s) | 1-Thrd (GB/s) | 1-Thrd | 
 | (3 4 0 1 2 5 6 7)   | 7.272    | 8.874   |  9.159 |  9.260 | 0.241 | 30.17 |
 | (6 7 3 4 5 0 1 2)   |  1.716   | 2.682   | 3.519 | 4.985 | 0.123  | 13.95 |
 | (2 0 1 6 7 3 4 5)   |  2.846   |  5.196 | 8.213  |  9.032  | 0.208   | 13.68 |

@@ -733,10 +733,10 @@ void permute_validation()
 //#define CLOCK_GETTIME(timestamp) clock_gettime(CLOCK_MONOTONIC, &(timestamp));
 #define CLOCK_GETTIME(timestamp)  timespec_get(&timestamp, TIME_UTC)
 #define TIMESPEC_TO_NSEC(ts) ((ts).tv_sec * NSEC_IN_SEC + (ts).tv_nsec)
-typedef uint16_t dtype;
 
-void measure_permute() {
-
+void measure_permute() 
+{
+    typedef uint16_t dtype;
     size_t numIters = 25;
     struct timespec start_time, end_time;  
     uint64_t dtypeSize = sizeof(dtype);

@@ -64,9 +64,9 @@ Installed RAM	32.0 GB \
 System type	64-bit operating system, x64-based processor
 
 **Tensor: dtype=uint16_t, dims={ 12, 32, 8, 16, 24, 16, 20, 3 }, size=2.1 GB** 
-| Permute | This Throughput     | This Throughput     | This Throughput     | This Throughput     | Torch Throughput   | Thpt Ratio |
+| Permute | This Thrpt     | This Thrpt     | This Thrpt     | This Thrpt     | Torch Thrpt   | Thrpt Ratio |
 |----------|----------|----------|----------|----------|------------|--------|
-| Index Order           | 1-Thread (GB/s) | 2-Thread (GB/s) | 4-Thread (GB/s) | 8-Thread (GB/s) | 1-thread (GB/s) | 1-Thread | 
+| Order           | 1-Thrd (GB/s) | 2-Thrd (GB/s) | 4-Thrd (GB/s) | 8-Thrd (GB/s) | 1-Thrd (GB/s) | 1-Thrd | 
 | (3 4 0 1 2 5 6 7)   | 6.949    | 8.221 | 9.603  | 9.630 | 3.157  | 2.20 |
 | (6 7 3 4 5 0 1 2)   | 1.649   | 2.597 | 3.284  | 3.550 | 0.149  | 11.07 |
 | (2 0 1 6 7 3 4 5)   |  3.296   | 5.646  | 8.281  | 9.056 | 1.090 | 3.02 |

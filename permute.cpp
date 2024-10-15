@@ -215,6 +215,7 @@ void Generalized_Transpose(const void *src, void *dst, uint64_t srcOffset, uint6
         srcS8 = (uint64_t*)src + srcOffset;
         dstS8 = (uint64_t*)dst + dstOffset;
         G_Transpose<uint64_t, 4>(srcS8, dstS8, gtrans);
+        break;
     case 3: 
         srcS1 = (uint8_t*)src + srcOffset * gtrans.dtypeSize;
         dstS1 = (uint8_t*)dst + dstOffset * gtrans.dtypeSize;

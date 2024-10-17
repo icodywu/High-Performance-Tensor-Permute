@@ -6,28 +6,28 @@ int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
 **The code/algorithm incorporates 4 unique optimization steps.** 
 1. Squeeze the trivial dimensions of size = 1. It takes O(n) time and space complexity. \
 EX.   perm_idx[2, 3, 5,  4, 1, 7, 0,  6] ==>  [1,  2, 4, 3, 0, 5]   \
->      src_nums[1, 9, 12, 6, 4, 6, 1, 10] ==>  [9, 12, 6, 4, 6, 10]  \
+      src_nums[1, 9, 12, 6, 4, 6, 1, 10] ==>  [9, 12, 6, 4, 6, 10]  \
 EX.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [2, 3,  5, 4, 1, 6, 0]   \
->      src_nums[8, 9, 12, 6, 4, 6, 1, 10] ==>  [8, 9, 12, 6, 4, 6, 10]     
+      src_nums[8, 9, 12, 6, 4, 6, 1, 10] ==>  [8, 9, 12, 6, 4, 6, 10]     
       
  
 2. Compress the consecutive permuted dimensions. It takes O(n) time and space complexity. \
 EX.   perm_idx[2, 3,  4,  5,    0, 1,   6, 7 ]  ==>  [1,           0,    2 ]  \
->      src_nums[8, 9,  12, 6,    4, 6,   9, 10]  ==>  [8x9,  12x6x4x6,  9x10]       
+      src_nums[8, 9,  12, 6,    4, 6,   9, 10]  ==>  [8x9,  12x6x4x6,  9x10]       
 EX.   perm_idx[2, 3,  4,  5,  6, 7,     0,  1]  ==>  [1,              0  ]    \
->      src_nums[8, 9,  12, 6,  4, 6,     9, 10]  ==>  [8x9,  12x6x4x6x9x10]         
+      src_nums[8, 9,  12, 6,  4, 6,     9, 10]  ==>  [8x9,  12x6x4x6x9x10]         
 EX.   perm_idx[2, 3,   5,  4,   6, 7,   0,  1]  ==>  [1,     3,    2,   4,    0  ]   \
->      src_nums[8, 9,   12, 6,   4, 6,   9, 10]  ==>  [8x9,  12x6,  4,   6,   9x10]        
+      src_nums[8, 9,   12, 6,   4, 6,   9, 10]  ==>  [8x9,  12x6,  4,   6,   9x10]        
   
 3. In the case where the last dim is unmuted, treat the last small dim, such that, dtypeSize*dim<=16, as a single data type 
          and then remove the last dim. \
 EX. perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
->    trim_dims[20, 8, 16, 12, 16]   ==> trim_dims[20, 8, 16, 12]  \
->    dtypeSize = 1                 ==> dtypeSize = 16             \
+    trim_dims[20, 8, 16, 12, 16]   ==> trim_dims[20, 8, 16, 12]  \
+    dtypeSize = 1                 ==> dtypeSize = 16             \
 This case is simply to treat the last dimension of 16 bytes to be the dim size of 1 wherein memcpy() is utilized to copy data. \    
 EX.   perm_idx [2,  1,  3,  0, 4]   ==> perm_idx [ 2, 1,  3,  0]  \
->      trim_dims[20, 8, 16, 12, 7]   ==> trim_dims[20, 8, 16, 12]  \
->      dtypeSize = 1                 ==> dtypeSize = 7             \
+      trim_dims[20, 8, 16, 12, 7]   ==> trim_dims[20, 8, 16, 12]  \
+      dtypeSize = 1                 ==> dtypeSize = 7             \
 This case is treated differently, wherein the last dim is also reduced to the size of 1 and the dtype of uint64_t is utilized to move data in an overlapped manner. 
 To avoid the write conflict under multi-thread, the boundary data is moved precisely by using memcpy of 7 bytes. 
  

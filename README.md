@@ -38,7 +38,7 @@ For special dtypeSize in {3, 5, 6, 7} (created from the merging of the small las
 For special dtypeSize in {9, ..., 16} (created from the merging of the small last dim), the data movement utilizes memcpy(). \
 The details are provided in void Generalized_Transpose()
 
-**Case 2.** The last dim is unpermuted, i.e., perm_idx[ndim-1] == ndim-1.
+4. **Case 2.** The last dim is unpermuted, i.e., perm_idx[ndim-1] == ndim-1.
 In this case, we deploy memcpy() to move the entire last dim of data (recall the last dim size is coerced to be greater than 8B). \
 The details are given in void Permute_TypeB_Kernel(); \    
 It is worth noting that both types of operations involve nearly no multiplication and completely no division in computing permuted indexes

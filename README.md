@@ -49,7 +49,9 @@ By partitioning evenly along the first dim, i.e., [0], the proposed multi-thread
 until it saturates the memory bandwidth.
 
 ## **Combining Permute and Dtype-Conv**
-permute_dtypeConv() combines the above-optimized tensor permutation and the dtype conversion, effectively eliminating twice data movements as well as an intermediate buffer. 
+The API, template<typename T_S, typename T_D> int permute_dtypeConv(const T_S* src, T_D* dst, uint64_t* src_dims,
+    uint64_t src_ndim, uint64_t* permute_idx, uint64_t* dst_dims, int nThreads = 1) \
+combines the above-optimized tensor permutation and the dtype conversion, effectively eliminating twice data movements as well as an intermediate buffer. 
 The essential connection lies in the following macro function: 
 ```
 #define DTYPE_CONV(dstPtr, srcPtr) {                                    \

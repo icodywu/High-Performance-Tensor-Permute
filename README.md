@@ -88,7 +88,7 @@ System type	64-bit operating system, x64-based processor
 **Tensor: dtype=uint16_t, dims={ 12, 32, 8, 16, 24, 16, 20, 3 }, size=2.1 GB** 
 | Permute | This Thrpt     | This Thrpt     | This Thrpt     | This Thrpt     | Torch Thrpt   | Boost |
 |----------|----------|----------|----------|----------|------------|--------|
-| Order           | 1-Thrd (GB/s) | 2-Thrd (GB/s) | 4-Thrd (GB/s) | 8-Thrd (GB/s) | 1-Thrd (GB/s) | 1-Thrd(X) | 
+| Order           | 1-Thrd (GB/s) | 2-Thrd (GB/s) | 4-Thrd (GB/s) | 8-Thrd (GB/s) | 1-Thrd (GB/s) | 1-Thrd (X) | 
 | (3 4 0 1 2 5 6 7)   | 6.949    | 8.221 | 9.603  | 9.630 | 3.157  | 2.20 |
 | (6 7 3 4 5 0 1 2)   | 1.649   | 2.597 | 3.284  | 3.550 | 0.149  | 11.07 |
 | (2 0 1 6 7 3 4 5)   |  3.296   | 5.646  | 8.281  | 9.056 | 1.090 | 3.02 |
@@ -110,7 +110,7 @@ ___
 **Tensor: dtype=uint16_t, dims={ 12, 32, 28, 16, 24, 16, 20, 4 }, size=9.9 GB** 
 | Permute | This Thrpt     | This Thrpt     | This Thrpt     | This Thrpt     | Torch Thrpt   | Boost |
 |----------|----------|----------|----------|----------|------------|--------|
-| Order           | 1-Thrd (GB/s) | 2-Thrd (GB/s) | 4-Thrd (GB/s) | 8-Thrd (GB/s) | 1-Thrd (GB/s) | 1-Thrd(X) | 
+| Order           | 1-Thrd (GB/s) | 2-Thrd (GB/s) | 4-Thrd (GB/s) | 8-Thrd (GB/s) | 1-Thrd (GB/s) | 1-Thrd (X) | 
 | (3 4 0 1 2 5 6 7)   | 7.272    | 8.874   |  9.159 |  9.260 | 0.241 | 30.17 |
 | (6 7 3 4 5 0 1 2)   |  1.716   | 2.682   | 3.519 | 4.985 | 0.123  | 13.95 |
 | (2 0 1 6 7 3 4 5)   |  2.846   |  5.196 | 8.213  |  9.032  | 0.208   | 13.68 |

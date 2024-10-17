@@ -50,7 +50,7 @@ until it saturates the memory bandwidth.
 ## **Combining Permute and Dtype-Conv**
 permute_dtypeConv() combines the above-optimized tensor permutation and the dtype conversion, effectively eliminating twice data movements as well as an intermediate buffer. 
 The essential connection lies in the following macro function: \
-#define DTYPE_CONV(dstPtr, srcPtr) {                                    \
+<code>#define DTYPE_CONV(dstPtr, srcPtr) {                                    \
     if constexpr (sizeof(T_S) <= sizeof(T_D))                           \
         SMtoLG_PTR(dstPtr, srcPtr);                                     \
     if constexpr (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value)  \
@@ -61,7 +61,7 @@ The essential connection lies in the following macro function: \
         INT64toINT32_PTR(dstPtr, srcPtr); ;                                     \
     if constexpr (is_same<T_S, double>::value && is_same<T_D, float>::value)    \
         FP64toFP32_PTR(dstPtr, srcPtr);                                         \
-}
+}</code>
 
 The above macro function eliminates the punishing cost related to the function call by using macros and branching using constexpr.   
 

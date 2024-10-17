@@ -36,7 +36,8 @@ Fundamentally, such permutation can be viewed as a generalized transpose.
 We thus propose an innovative generalized batch transpose technique, which effectively takes advantage of the cache line by creating column-wise consecutive write addresses.  
 For special dtypeSize in {3, 5, 6, 7} (created from the merging of the small last dim), the data movement is achieved in an overlapped manner. \
 For special dtypeSize in {9, ..., 16} (created from the merging of the small last dim), the data movement utilizes memcpy(). \
-The details are provided in void Generalized_Transpose() \
+The details are provided in void Generalized_Transpose()
+
 **Case 2.** The last dim is unpermuted, i.e., perm_idx[ndim-1] == ndim-1.
 In this case, we deploy memcpy() to move the entire last dim of data (recall the last dim size is coerced to be greater than 8B). \
 The details are given in void Permute_TypeB_Kernel(); \    
@@ -64,7 +65,6 @@ The essential connection lies in the following macro function:
         FP64toFP32_PTR(dstPtr, srcPtr);                                         \
 }
 ```
-
 The above macro function eliminates the punishing cost related to the function call by using macros and branching using constexpr.   
 
 ## **Validation**

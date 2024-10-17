@@ -1,4 +1,4 @@
-## **Algorithm Description**
+## **Permute Algorithm Description**
 This C++ code provides the most efficient implementation for the tensor permute function, which beats torch.permute() by 3-20X: \
 int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     uint64_t src_ndim, uint64_t* permute_idx, uint64_t* dst_dims, int nThreads = 1);
@@ -46,7 +46,24 @@ as opposed to the straightforward method.
 By default, it utilizes a single thread. Multi-thread is activated by setting the parameter nThreads >1.
 By partitioning evenly along the first dim, i.e., [0], the proposed multi-thread operations linearly reduce the running time,
 until it saturates the memory bandwidth.
- 
+
+## **Combining Permute and Dtype-Conv**
+permute_dtypeConv() combines the above-optimized tensor permutation and the dtype conversion, effectively eliminating twice data movements as well as an intermediate buffer. 
+The essential connection lies in the following macro function:
+#define DTYPE_CONV(dstPtr, srcPtr) {                                    \
+    if constexpr (sizeof(T_S) <= sizeof(T_D))                           \
+        SMtoLG_PTR(dstPtr, srcPtr);                                     \
+    if constexpr (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value)  \
+        INT32toINT8_PTR(dstPtr, srcPtr);                                        \
+    if constexpr (is_same<T_S, int32_t>::value && is_same<T_D, int16_t>::value) \
+        INT32toINT16_PTR(dstPtr, srcPtr);                                       \
+    if constexpr (is_same<T_S, int64_t>::value && is_same<T_D, int32_t>::value) \
+        INT64toINT32_PTR(dstPtr, srcPtr); ;                                     \
+    if constexpr (is_same<T_S, double>::value && is_same<T_D, float>::value)    \
+        FP64toFP32_PTR(dstPtr, srcPtr);                                         \
+}
+The above macro function eliminates the punishing cost related to the function call by using macros and branching using constexpr.   
+
 ## **Validation**
 Function permute_validation() uses the randomly generated tensors and permutations to test against the equality
 permute(tensor, perm_idx) -> permuted_tensor

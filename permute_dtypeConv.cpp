@@ -127,14 +127,12 @@ using namespace std;
 
 template<typename T_S, typename T_D> bool constexpr valid_dtype_conv()
 {
-    if constexpr (sizeof(T_S) <= sizeof(T_D) 
-        || (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value) 
-        || (is_same<T_S, int32_t>::value && is_same<T_D, int16_t>::value) 
-        || (is_same<T_S, int64_t>::value && is_same<T_D, int32_t>::value) 
+   return ( sizeof(T_S) <= sizeof(T_D) )
+        || (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value)
+        || (is_same<T_S, int32_t>::value && is_same<T_D, int16_t>::value)
+        || (is_same<T_S, int64_t>::value && is_same<T_D, int32_t>::value)
         //|| is_same<T_S, float>::value && is_same<T_D, half>::value) 
-        || (is_same<T_S, double>::value && is_same<T_D, float>::value) ) 
-        return true;
-    return false;
+        || (is_same<T_S, double>::value && is_same<T_D, float>::value);
 }
 typedef struct {
     int64_t lastDim;       // last dim, this is used when the last (small) dim is treated as a single data unit

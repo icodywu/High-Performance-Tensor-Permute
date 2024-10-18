@@ -47,19 +47,6 @@ using namespace std;
 
 #define HALF_MAX 65504.0f
 
-template<typename T_S, typename T_D> bool constexpr dtype_conv()
-{
-    if constexpr (sizeof(T_S) <= sizeof(T_D) 
-        || (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value) 
-        || (is_same<T_S, int32_t>::value && is_same<T_D, int16_t>::value) 
-        || (is_same<T_S, int64_t>::value && is_same<T_D, int32_t>::value) 
-        //|| is_same<T_S, float>::value && is_same<T_D, half>::value) 
-        || (is_same<T_S, double>::value && is_same<T_D, float>::value) ) 
-        return true;
-    return false;
-}
-
-
 #define FP32toFP16_PTR(dstPtr, srcPtr)                                  \
 {                                                                       \
     if (*srcPtr>=-HALF_MAX && *srcPtr <= HALF_MAX) {                    \
@@ -124,7 +111,7 @@ template<typename T_S, typename T_D> bool constexpr dtype_conv()
     *dstPtr++ = *srcPtr++;                                              \
 }
 
-// it utilizes macro function to eliminate function call and "constexpr" to eliminate branching during compiling 
+// It utilizes macro function to eliminate function call and "constexpr" to eliminate branching during compiling 
 #define DTYPE_CONV(dstPtr, srcPtr) {                                    \
     if constexpr (sizeof(T_S) <= sizeof(T_D))                           \
         SMtoLG_PTR(dstPtr, srcPtr);                                     \
@@ -138,6 +125,17 @@ template<typename T_S, typename T_D> bool constexpr dtype_conv()
         FP64toFP32_PTR(dstPtr, srcPtr);                                         \
 }
 
+template<typename T_S, typename T_D> bool constexpr valid_dtype_conv()
+{
+    if constexpr (sizeof(T_S) <= sizeof(T_D) 
+        || (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value) 
+        || (is_same<T_S, int32_t>::value && is_same<T_D, int16_t>::value) 
+        || (is_same<T_S, int64_t>::value && is_same<T_D, int32_t>::value) 
+        //|| is_same<T_S, float>::value && is_same<T_D, half>::value) 
+        || (is_same<T_S, double>::value && is_same<T_D, float>::value) ) 
+        return true;
+    return false;
+}
 typedef struct {
     int64_t lastDim;       // last dim, this is used when the last (small) dim is treated as a single data unit
     int64_t rows, cols;    // numbers of rows and columns
@@ -551,7 +549,7 @@ template<typename T_S, typename T_D> int permute_dtypeConv(const T_S* src, T_D* 
     int64_t perm_inv[MAX_DIM];
     uint64_t squz_ndim, trim_ndim;
     
-    static_assert(dtype_conv<T_S, T_D>(), "Unsupported Dtype Convertion");
+    static_assert(valid_dtype_conv<T_S, T_D>(), "Unsupported Dtype Convertion");
     
     uint64_t i, n;
     /*~~~~~~~~~~~~~~~~ squeeze dims with size 1 ~~~~~~~~~~~~~~~~

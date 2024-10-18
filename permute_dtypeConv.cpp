@@ -47,14 +47,15 @@ using namespace std;
 
 #define HALF_MAX 65504.0f
 
-template<typename T_S, typename T_D> bool dtype_conv()
+template<typename T_S, typename T_D> bool constexpr dtype_conv()
 {
-    if (sizeof(T_S) <= sizeof(T_D)) return true;
-    if (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value) return true;
-    if (is_same<T_S, int32_t>::value && is_same<T_D, int16_t>::value) return true;
-    if (is_same<T_S, int64_t>::value && is_same<T_D, int32_t>::value) return true;
-    //if (is_same<T_S, float>::value && is_same<T_D, half>::value) return true;
-    if (is_same<T_S, double>::value && is_same<T_D, float>::value) return true;
+    if constexpr (sizeof(T_S) <= sizeof(T_D) 
+        || (is_same<T_S, int32_t>::value && is_same<T_D, int8_t>::value) 
+        || (is_same<T_S, int32_t>::value && is_same<T_D, int16_t>::value) 
+        || (is_same<T_S, int64_t>::value && is_same<T_D, int32_t>::value) 
+        //|| is_same<T_S, float>::value && is_same<T_D, half>::value) 
+        || (is_same<T_S, double>::value && is_same<T_D, float>::value) ) 
+        return true;
     return false;
 }
 
@@ -550,7 +551,8 @@ template<typename T_S, typename T_D> int permute_dtypeConv(const T_S* src, T_D* 
     int64_t perm_inv[MAX_DIM];
     uint64_t squz_ndim, trim_ndim;
     
-
+    static_assert(dtype_conv<T_S, T_D>(), "Unsupported Dtype Convertion");
+    
     uint64_t i, n;
     /*~~~~~~~~~~~~~~~~ squeeze dims with size 1 ~~~~~~~~~~~~~~~~
     * EX. 1.   perm_idx[2, 3, 5, 4, 1, 7, 0,  6]  ==>  [2, 4, 3, 1, 6, 0,  5]
@@ -663,11 +665,7 @@ template<typename T_S, typename T_D> int permute_dtypeConv(const T_S* src, T_D* 
             trim_ndim--;            // get rid of the last dim
         }
     }
-
-    if (!dtype_conv<T_S, T_D>()) {
-        cerr << "Unsupported Dtype Convertion\n";
-        return 1;
-    }
+    
     if (1 == trim_ndim) {
         const T_S* srcPtr = src;
         T_D* dstPtr = dst;

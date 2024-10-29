@@ -1,5 +1,5 @@
 ## **Permute Algorithm Description**
-This C++ code provides the most efficient implementation for the tensor permute function, which beats torch.permute() by 3-20X: \
+This C++ code provides the most efficient implementation for the tensor permute function, which beats torch.permute() by 3-40X: \
 int permute(const void* src, void* dst, uint64_t dtypeSize, uint64_t* src_dims,
     uint64_t src_ndim, uint64_t* permute_idx, uint64_t* dst_dims, int nThreads = 1);
 

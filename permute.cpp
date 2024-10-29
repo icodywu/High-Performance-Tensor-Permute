@@ -731,8 +731,8 @@ void permute_validation()
     cout << "Permute has been validated by " << count << " random tests\n";
 }
 #define NSEC_IN_SEC (1000000000L)
-//#define CLOCK_GETTIME(timestamp) clock_gettime(CLOCK_MONOTONIC, &(timestamp));
-#define CLOCK_GETTIME(timestamp)  timespec_get(&timestamp, TIME_UTC)
+#define CLOCK_GETTIME(timestamp) clock_gettime(CLOCK_MONOTONIC, &(timestamp));
+//#define CLOCK_GETTIME(timestamp)  timespec_get(&timestamp, TIME_UTC)   // for Visul Studio
 #define TIMESPEC_TO_NSEC(ts) ((ts).tv_sec * NSEC_IN_SEC + (ts).tv_nsec)
 
 void measure_permute() 

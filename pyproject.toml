@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hptpermute"
+version = "1.0.0"
+description = "Fast multi-threaded permutation (transpose) of dense NumPy arrays and PyTorch CPU tensors"
+readme = "README.md"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [{ name = "Yingquan (Cody) Wu" }]
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["tensor", "permute", "transpose", "pytorch", "numpy"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "numpy"]
+
+[project.urls]
+Homepage = "https://github.com/icodywu/High-Performance-Tensor-Permute"
+
+[tool.setuptools]
+package-dir = { "" = "python" }
+packages = ["hptpermute"]

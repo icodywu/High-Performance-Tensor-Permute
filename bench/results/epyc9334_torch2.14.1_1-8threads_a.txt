@@ -1,0 +1,40 @@
+# node: 2 x AMD EPYC 9334 (one of the cluster's identical nodes)
+CPU(s):                               128
+Model name:                           AMD EPYC 9334 32-Core Processor
+NUMA node(s):                         2
+g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+# torch 2.14.1+cpu, hptpermute 1.0.0, x86_64, Linux-5.15.0-140-generic-x86_64-with-glibc2.35
+# GB/s = (bytes read + bytes written) / best time of at least 5 runs and 0.2 s; x = hptp / torch copy_
+case                     perm                       dtype     thr contiguous      copy_       hptp       x
+2-D transpose            1,0                        float32     1       2.92       7.51      11.05    1.47
+2-D transpose            1,0                        float32     8       2.92       7.51      61.33    8.17
+2-D transpose            1,0                        uint8       1       1.82       2.98       4.82    1.62
+2-D transpose            1,0                        uint8       8       1.82       2.98      36.76   12.35
+batched transpose        0,2,1                      float32     1       1.53       2.34      13.30    5.68
+batched transpose        0,2,1                      float32     8       8.30      18.35      62.23    3.39
+NCHW -> NHWC             0,2,3,1                    float32     1       3.37      11.02      10.59    0.96
+NCHW -> NHWC             0,2,3,1                    float32     8      13.32      69.62      63.09    0.91
+NHWC -> NCHW             0,3,1,2                    float32     1       1.98       3.68       8.98    2.44
+NHWC -> NCHW             0,3,1,2                    float32     8       9.02      23.09      58.94    2.55
+images CHW -> HWC        0,2,3,1                    uint8       1       2.32       2.33      10.96    4.71
+images CHW -> HWC        0,2,3,1                    uint8       8      17.71      18.48      83.22    4.50
+images HWC -> CHW        0,3,1,2                    uint8       1       3.87       3.87       7.53    1.95
+images HWC -> CHW        0,3,1,2                    uint8       8      30.67      30.69      58.12    1.89
+(B,S,H,D) -> (B,H,S,D)   0,2,1,3                    bfloat16    1       3.78      22.12      18.46    0.83
+(B,S,H,D) -> (B,H,S,D)   0,2,1,3                    bfloat16    8      13.87      80.21      81.88    1.02
+8-D                      3,4,0,1,2,5,6,7            uint16      1       3.22      11.76      19.45    1.65
+8-D                      3,4,0,1,2,5,6,7            uint16      8      12.10      57.85      79.64    1.38
+8-D                      6,7,3,4,5,0,1,2            uint16      1       0.34       0.38       4.54   11.88
+8-D                      6,7,3,4,5,0,1,2            uint16      8       2.40       2.77      34.81   12.58
+8-D                      4,5,6,7,1,2,3,0            uint16      1       0.66       0.79       4.03    5.08
+8-D                      4,5,6,7,1,2,3,0            uint16      8       3.89       5.53      26.24    4.74
+8-D                      6,5,4,3,2,1,0,7            uint16      1       0.40       0.43       4.75   11.06
+8-D                      6,5,4,3,2,1,0,7            uint16      8       2.68       3.24      33.42   10.33
+8-D                      3,4,0,1,2,5,6,7            float32     1       3.85      20.93      23.96    1.14
+8-D                      3,4,0,1,2,5,6,7            float32     8      13.89      73.32      80.88    1.10
+8-D                      6,7,3,4,5,0,1,2            float32     1       0.59       0.71       4.25    6.00
+8-D                      6,7,3,4,5,0,1,2            float32     8       3.94       5.43      24.48    4.51
+8-D                      4,5,6,7,1,2,3,0            float32     1       1.03       1.39       5.36    3.85
+8-D                      4,5,6,7,1,2,3,0            float32     8       4.57       7.31      35.35    4.84
+8-D                      6,5,4,3,2,1,0,7            float32     1       0.66       0.78       6.33    8.10
+8-D                      6,5,4,3,2,1,0,7            float32     8       4.33       6.03      43.33    7.19

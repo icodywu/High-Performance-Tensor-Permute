@@ -1,5 +1,7 @@
 # High-Performance Tensor Permute
 
+[![CI](https://github.com/icodywu/High-Performance-Tensor-Permute/actions/workflows/ci.yml/badge.svg)](https://github.com/icodywu/High-Performance-Tensor-Permute/actions/workflows/ci.yml)
+
 Fast, multi-threaded permutation (transpose) of dense tensors on the CPU: the work behind
 `x.permute(dims).contiguous()` in PyTorch and `np.ascontiguousarray(x.transpose(dims))` in NumPy. It is one C++17
 header, a small C library, and a Python package for NumPy arrays and PyTorch tensors.

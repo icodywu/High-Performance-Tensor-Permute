@@ -284,8 +284,10 @@ static void convert_values() {
     CHECK((convert<int8_t, int64_t>(-5) == -5 && convert<uint16_t, uint8_t>(65535) == 255), "widening, narrowing unsigned");
     CHECK((convert<double, float>(big) == static_cast<float>(inf) && convert<double, float>(-big) == -static_cast<float>(inf)),
           "double -> float overflow");
-    volatile float tenth = convert<double, float>(0.1);  // stored, so x87 excess precision is rounded away
-    CHECK((std::isnan(convert<double, float>(nan)) && tenth == 0.1f), "double -> float");
+    // Both sides stored as float: with x87 excess precision (32-bit x86), even the literal 0.1f may be evaluated as a
+    // long double.
+    volatile float tenth = convert<double, float>(0.1), float_tenth = 0.1f;
+    CHECK((std::isnan(convert<double, float>(nan)) && tenth == float_tenth), "double -> float");
     CHECK((convert<float, int32_t>(3e9f) == INT32_MAX && convert<float, int32_t>(-3e9f) == INT32_MIN), "float -> int32 clamp");
     CHECK((convert<float, int32_t>(2.9f) == 2 && convert<float, int32_t>(-2.9f) == -2), "float -> int32 truncates");
     CHECK((convert<double, int32_t>(nan) == 0 && convert<float, uint8_t>(-1.5f) == 0 && convert<float, uint8_t>(300.f) == 255),
